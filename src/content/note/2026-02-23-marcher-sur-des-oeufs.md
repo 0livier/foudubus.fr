@@ -1,7 +1,7 @@
 ---
 title: Marcher sur des oeufs
 timestamp: 2026-02-23 16:47:21+01:00
-tags: [communication, distance, récit]
+tags: [Communication, Distance, Récit]
 description: "Etre à l’écoute à distance, c’est risquer le malentendu. Un texte sur la sidération, la pudeur, et la présence quand tout est sensible."
 
 ---
