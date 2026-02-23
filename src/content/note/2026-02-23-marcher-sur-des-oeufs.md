@@ -6,8 +6,6 @@ description: "Etre à l’écoute à distance, c’est risquer le malentendu. Un
 
 ---
 
-# Marcher sur des oeufs
-
 Il y a des moments où une conversation bascule.
 
 On discute de choses simples, presque anodines, un musée, un livre, une montagne. On se reconnaît dans une attention, dans un rythme, dans une manière d’écrire. Et puis, sans prévenir, quelqu’un pose un poids sur la table. Un vrai.
