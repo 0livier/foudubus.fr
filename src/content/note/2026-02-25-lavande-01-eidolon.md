@@ -15,11 +15,13 @@ series: Lavande
 
 
 <div style="background: white;padding:1em;color:black">
-<img style="float:right; width:15%" src="/images/lavander/eidolon.png">
+<img style="float:right; width:25%" src="/images/lavande/eidolon.png">
 <h2>Eidolon, <em>nom masculin</em></h2>
 
-- Fromage à pâte molle et croûte fleurie, issu de la ferme biologique Grey Barn & Farm, dans le Massachusetts.  
+- Fromage à pâte molle et croûte fleurie, issu de la ferme biologique Grey Barn & Farm, dans le Massachusetts.<br/>
 - Esprit, fantôme, apparition spectrale ou simulacre d’une personne vivante ou disparue
+<div style="clear: both;"></div>
+
 </div>
 
 
