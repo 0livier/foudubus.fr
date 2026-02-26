@@ -47,7 +47,7 @@ Mon estomac se serre. Eric, avec son sourire timide. Eric qui rougit quand on lu
 
 Les trois vipères échangent un regard entendu. L'une d'elles m'apprend qu'il a été arrêté à l’aube pour... enfin, je vois bien ce qu'elle veut dire. Mrs Patterson précise avec un air dégoûté : sa maison est près du parc où il y a l’aire de jeux. Une des autres lui répond qu'il était toujours si poli pourtant, qui aurait pu prédire ? Mrs Patterson répond alors que les plus discrets sont souvent les pires et qu’on comprend mieux pourquoi il n’a jamais eu de fiancée.
 
-*Non mesdames, les pires, ce sont les grenouilles de bénitier qui se targuent d’aimer leur prochain mais trouvent des excuses quand ce prochain est trop différent… Il y a un monde entre “Aimez vos ennemis, bénissez ceux qui vous maudissent” (Matthieu 5:44) et le “J'ai vu un garçon avec du vernis à ongles. Je voulais lui casser les doigts” du pasteur [Joe Cammilleri](https://www.youtube.com/shorts/05A1_MNxRQU).
+*Non mesdames, les pires, ce sont les grenouilles de bénitier qui se targuent d’aimer leur prochain mais trouvent des excuses quand ce prochain est trop différent… Il y a un monde entre "Aimez vos ennemis, bénissez ceux qui vous maudissent" (Matthieu 5\:44) et le "J'ai vu un garçon avec du vernis à ongles. Je voulais lui casser les doigts" du pasteur [Joe Cammilleri](https://www.youtube.com/shorts/05A1_MNxRQU).*
 
 La compagne du shérif – ils se sont bien trouvés – continue, menton levé, et détaille dans un sourire qu’il aurait fait des avances à un homme, dans le bar de la ville la veille. Elle précise que c’est son mari qui lui a dit, avant de partir au travail. La deuxième hésite à renchérir mais finit par lâcher une insinuation sur un risque vu son travail “*avec des jeunes*”.
 
