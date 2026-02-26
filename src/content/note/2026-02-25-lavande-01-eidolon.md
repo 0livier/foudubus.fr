@@ -7,21 +7,20 @@ series: Lavande
 
 <br/>
 
-<div style="text-align:right">
-   A Claire A. et à toutes celles et ceux qui luttent
+<div style="text-align:right; font-family: var(--font-cursive); font-size: 1.25rem;">
+   À Claire A. et à toutes celles et ceux qui luttent...
 </div>
 
 <br/>
 
 
-<div style="background: white;padding:1em;color:black">
-<img style="float:right; width:25%" src="/images/lavande/eidolon.png">
-<h2>Eidolon, <em>nom masculin</em></h2>
+<div class="definition">
+   <img src="/images/lavande/eidolon.png">
+   <h2><strong>Eidolon</strong>, <em>nom masculin</em></h2>
 
-- Fromage à pâte molle et croûte fleurie, issu de la ferme biologique Grey Barn & Farm, dans le Massachusetts.<br/>
-- Esprit, fantôme, apparition spectrale ou simulacre d’une personne vivante ou disparue
-<div style="clear: both;"></div>
-
+   - Fromage à pâte molle et croûte fleurie, issu de la ferme biologique Grey Barn & Farm, dans le Massachusetts.<br/>
+   - Esprit, fantôme, apparition spectrale ou simulacre d’une personne vivante ou disparue
+   <div style="clear: both;"></div>
 </div>
 
 

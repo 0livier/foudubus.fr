@@ -7,12 +7,12 @@ series: Lavande
 
 <br/>
 
-<div style="background: white;padding:1em;color:black">
-<img style="float:right; width:25%" src="/images/lavande/pensee.png">
-<h2>Pensée, <em>nom féminin</em></h2>
-- Fleur comestible, aux couleurs vives, parfois utilisée pour orner les plats ou en changer la saveur<br/>
-- Mouvement de l’esprit, idée, réflexion intime.
-<div style="clear: both;"></div>
+<div class="definition">
+    <img src="/images/lavande/pensee.png">
+    <h2><strong>Pensée</strong>, <em>nom féminin</em></h2>
+    - Fleur comestible, aux couleurs vives, parfois utilisée pour orner les plats ou en changer la saveur<br/>
+    - Mouvement de l’esprit, idée, réflexion intime.
+    <div style="clear: both;"></div>
 </div>
 
  selon elle, il faut un peu plus de dix jours de séchage pour que les plantes donnent  des huiles essentielles capables de se diffuser sans apporter d'amertume. Je glisse alors quelques brins de romarin et de thym qui ont attendu suffisamment.
