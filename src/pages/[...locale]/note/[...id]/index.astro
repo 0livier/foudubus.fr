@@ -73,7 +73,7 @@ const articleImageUrl = new URL(`${canonicalPathname}/graph.png`, Astro.site);
 					note.data.series && (
 						<span>
 							<Icon name="lucide--layers" />
-							{note.data.series}
+							<a href={`${getRelativeLocaleUrl(locale, canonicalPagePath("/note"))}?series=${encodeURIComponent(note.data.series)}`} class="link text-inherit !text-[1rem]">{note.data.series}</a>
 						</span>
 					)
 				}
