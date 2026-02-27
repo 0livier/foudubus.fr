@@ -1,5 +1,5 @@
-/** Paths that are static assets (no trailing slash). */
-const STATIC_EXT = /\.(xml|xsl|json|ico|png|svg|webmanifest|css|js|txt|webp)$/i;
+/** Paths that are static assets (no trailing slash). Excludes xml/xsl so feed endpoints match Astro trailingSlash: "always". */
+const STATIC_EXT = /\.(json|ico|png|svg|webmanifest|css|js|txt|webp)$/i;
 
 /**
  * Canonical URL policy: hyphens in slugs, trailing slash always (except root).

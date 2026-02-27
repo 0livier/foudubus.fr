@@ -106,7 +106,7 @@
   <footer class="flex flex-col gap-2 sm:flex-row sm:gap-7">
     <ThemeSwitcher />
 
-    <a href={getRelativeLocaleUrl(locale, "/feed.xml")} target="_blank" aria-label="Subscription" class="inline-flex"
+    <a href={getRelativeLocaleUrl(locale, canonicalPagePath("/feed.xml"))} target="_blank" aria-label="Subscription" class="inline-flex"
       ><Icon name="lucide--rss" /></a
     >
 
