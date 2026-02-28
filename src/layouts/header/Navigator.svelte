@@ -23,7 +23,6 @@
     },
     { label: t("navigation.note"), path: getRelativeLocaleUrl(locale, canonicalPagePath("/note")), icon: "lucide--notebook-pen" }
     //,{ label: t("navigation.jotting"), path: getRelativeLocaleUrl(locale, "/jotting"), icon: "lucide--feather" }
-    //,{ label: t("navigation.about"), path: getRelativeLocaleUrl(locale, "/about"), icon: "lucide--at-sign" }
   ];
 
   /**
