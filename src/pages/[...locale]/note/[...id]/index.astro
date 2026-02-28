@@ -14,31 +14,59 @@ import { tagSlug } from "$utils/slug";
 import { canonicalPath, canonicalPagePath } from "$utils/canonical-url";
 
 export async function getStaticPaths() {
-	// Get all notes excluding drafts
 	const notes = await getCollection("note", note => !note.data.draft);
 
-	return notes.map(note => {
-		let locale: string | undefined;
-		let id: string;
-
+	/** Resolve (locale, id) for a note. Inlined so it is in scope in all execution contexts. */
+	function toRoute(note: { id: string }) {
 		if (monolocale) {
-			locale = undefined;
-			id = note.id;
-		} else {
-			// Extract language and note ID from file path structure
-			const [language, ...ids] = note.id.split("/");
-
-			locale = config.i18n.defaultLocale === language ? undefined : language;
-			id = ids.join("/");
+			return { locale: undefined as string | undefined, id: note.id };
 		}
+		const [language, ...ids] = note.id.split("/");
+		const locale = config.i18n.defaultLocale === language ? undefined : language;
+		const id = ids.join("/");
+		return { locale, id };
+	}
 
-		// Generate path params with optional locale (omit for default locale)
-		return { params: { locale, id }, props: { note } };
+	// Group notes by locale, then by series; sort each series by timestamp (asc), then top (desc)
+	const byLocale = new Map<string | undefined, typeof notes>();
+	for (const note of notes) {
+		const { locale } = toRoute(note);
+		if (!byLocale.has(locale)) byLocale.set(locale, []);
+		byLocale.get(locale)!.push(note);
+	}
+	const seriesChains = new Map<string, { prev: { id: string; title: string } | null; next: { id: string; title: string } | null }>();
+	for (const [, localeNotes] of byLocale) {
+		const bySeries = new Map<string, typeof notes>();
+		for (const note of localeNotes) {
+			const series = note.data.series;
+			if (!series) continue;
+			if (!bySeries.has(series)) bySeries.set(series, []);
+			bySeries.get(series)!.push(note);
+		}
+		for (const [, seriesNotes] of bySeries) {
+			const sorted = [...seriesNotes].sort((a, b) => {
+				const t = a.data.timestamp.getTime() - b.data.timestamp.getTime();
+				if (t !== 0) return t;
+				return (b.data.top ?? 0) - (a.data.top ?? 0);
+			});
+			for (let i = 0; i < sorted.length; i++) {
+				const note = sorted[i];
+				const prev = i > 0 ? { id: toRoute(sorted[i - 1]).id, title: sorted[i - 1].data.title } : null;
+				const next = i < sorted.length - 1 ? { id: toRoute(sorted[i + 1]).id, title: sorted[i + 1].data.title } : null;
+				seriesChains.set(`${note.id}`, { prev, next });
+			}
+		}
+	}
+
+	return notes.map(note => {
+		const { locale, id } = toRoute(note);
+		const seriesNav = note.data.series ? seriesChains.get(note.id) ?? { prev: null, next: null } : { prev: null, next: null };
+		return { params: { locale, id }, props: { note, ...seriesNav } };
 	});
 }
 
 const { locale = config.i18n.defaultLocale } = Astro.params;
-const { note } = Astro.props;
+const { note, prev, next } = Astro.props;
 
 // Render markdown content and extract headings for TOC
 const { Content, headings, remarkPluginFrontmatter: frontmatter } = await render(note);
@@ -66,6 +94,33 @@ const articleImageUrl = new URL(`${canonicalPathname}/graph.png`, Astro.site);
 	twitter={note.data.twitter}
 >
 	<main class="flex flex-col gap-6">
+		{
+			note.data.series && (prev || next) && (
+				<nav class="flex flex-wrap items-center justify-between gap-4 pb-6" aria-label={t("note.series")}>
+					{
+						prev ? (
+							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${prev.id}`))} class="link inline-flex items-center gap-1 text-[0.875rem] text-secondary">
+								<Icon name="lucide--arrow-left" class="rtl:rotate-180 shrink-0" />
+								<span>{t("note.prevChapter")}</span>
+							</a>
+						) : (
+							<span />
+						)
+					}
+					{
+						next ? (
+							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${next.id}`))} class="link inline-flex items-center gap-1 text-[0.875rem] text-secondary ms-auto">
+								<span>{t("note.nextChapter")}</span>
+								<Icon name="lucide--arrow-right" class="rtl:rotate-180 shrink-0" />
+							</a>
+						) : (
+							<span />
+						)
+					}
+				</nav>
+			)
+		}
+
 		<header class="flex flex-col gap-4" {...(note.data.series && { "data-series": note.data.series })}>
 			<h1>{note.data.title}</h1>
 			<div class="flex flex-col gap-3 sm:flex-row *:flex *:items-center *:gap-1 *:text-[0.875rem] *:text-secondary">
@@ -113,6 +168,33 @@ const articleImageUrl = new URL(`${canonicalPathname}/graph.png`, Astro.site);
 				}
 			</div>
 		</Sensitive>
+
+		{
+			note.data.series && (prev || next) && (
+				<nav class="flex flex-wrap items-center justify-between gap-4 border-t border-weak pt-6" aria-label={t("note.series")}>
+					{
+						prev ? (
+							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${prev.id}`))} class="link inline-flex items-center gap-1 text-[0.875rem] text-secondary">
+								<Icon name="lucide--arrow-left" class="rtl:rotate-180 shrink-0" />
+								<span>{t("note.prevChapter")}</span>
+							</a>
+						) : (
+							<span />
+						)
+					}
+					{
+						next ? (
+							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${next.id}`))} class="link inline-flex items-center gap-1 text-[0.875rem] text-secondary ms-auto">
+								<span>{t("note.nextChapter")}</span>
+								<Icon name="lucide--arrow-right" class="rtl:rotate-180 shrink-0" />
+							</a>
+						) : (
+							<span />
+						)
+					}
+				</nav>
+			)
+		}
 
 		<Position {locale} />
 	</main>

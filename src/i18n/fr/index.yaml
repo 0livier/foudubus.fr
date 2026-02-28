@@ -35,6 +35,8 @@ navigation:
 note:
   contents: Table des matières
   empty: Aucun article disponible
+  nextChapter: Chapitre suivant
+  prevChapter: Chapitre précédent
   series: Série
   tag: Tag
   top: Retour en haut
