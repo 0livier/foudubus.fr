@@ -2,6 +2,7 @@
 title: Chapitre 3
 timestamp: 2026-02-27 16:47:21+01:00
 series: Lavande
+tags: [Nouvelle, Fiction]
 ---
 
 
