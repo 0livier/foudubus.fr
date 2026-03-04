@@ -114,8 +114,8 @@ onMount(() => {
 					<time datetime={note.data.timestamp.toISOString()} class="font-mono text-[0.65rem] leading-none text-remark">{Time.date.locale(note.data.timestamp, locale)}</time>
 				</div>
 				<span class="inline-flex items-center sm:justify-end gap-1 flex-wrap content-start sm:ms-auto text-remark">
-					{#each note.data.tags as tag}
-						<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${tagSlug(tag)}`))} class="text-[1rem] link">{tag}</a>
+					{#each note.data.tags as tag, i}
+						<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${tagSlug(tag)}`))} class="text-[1rem] link">{tag}</a>{#if i < note.data.tags.length - 1}, {/if}
 					{/each}
 				</span>
 			</section>

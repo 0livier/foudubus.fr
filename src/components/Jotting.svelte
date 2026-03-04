@@ -85,8 +85,8 @@ onMount(() => {
 						<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/jotting/${monolocale ? jotting.id : jotting.id.split("/").slice(1).join("/")}`))} class="leading-normal text-primary font-semibold link truncate">{jotting.data.title}</a>
 					</span>
 					<span class="flex gap-1">
-						{#each jotting.data.tags as tag}
-							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${tagSlug(tag)}`))} class="text-[0.825rem] text-remark link">#{tag}</a>
+						{#each jotting.data.tags as tag, i}
+							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${tagSlug(tag)}`))} class="text-[0.825rem] text-remark link">#{tag}</a>{#if i < jotting.data.tags.length - 1}, {/if}
 						{/each}
 					</span>
 				</section>

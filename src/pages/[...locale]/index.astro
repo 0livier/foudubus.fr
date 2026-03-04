@@ -106,10 +106,13 @@ const { Content } = preface ? await render(preface) : ({} as any);
 								{latest.data.title}
 							</a>
 							<div class="flex gap-1">
-								{latest.data.tags?.map(tag => (
-<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${tagSlug(tag)}`))} class="text-remark text-[1rem] link">
-									{tag}
-								</a>
+								{latest.data.tags?.map((tag, i) => (
+									<>
+									{i > 0 ? ", " : ""}
+									<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${tagSlug(tag)}`))} class="text-remark text-[1rem] link">
+										{tag}
+									</a>
+									</>
 								))}
 							</div>
 						</div>
