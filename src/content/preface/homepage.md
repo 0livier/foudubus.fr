@@ -7,7 +7,7 @@ On l'a toutes et tous déjà croisée. La personne qui parle seule dans le bus d
 
 Et parfois... On entend une phrase tellement évidente qu'on se demande comment on n'y avait jamais pensé. Un rire franc qui coupe le silence triste des transports. Un regard qui nous dépasse.
 
-**C'est un peu ça, la folle ou le fou du bus. Une fissure dans la normalité. Quelqu'un qui refuse les cases. Les grandes maisons d'éditions sont descendues ce bus depuis longtemps.**
+**C'est un peu ça, la folle ou le fou du bus. Une fissure dans la normalité. Quelqu'un qui refuse les cases. Les grandes maisons d'éditions sont descendues de ce bus depuis longtemps.**
 
 Elles se garent trop souvent dans les beaux quartiers. En SUV. Elles ne froissent personne et publient au moment qui maximise les profits. Quelle folie.
 
