@@ -26,6 +26,8 @@
 	},
 	"scripts": {
 		"new": "tsx --loader esm-loader-yaml scripts/new.ts",
+		"posse:prepare": "tsx scripts/posse-prepare.ts",
+		"posse:post:mastodon": "tsx scripts/posse-post-mastodon.ts",
 		"dev": "astro dev",
 		"check": "astro check",
 		"build": "astro build",
