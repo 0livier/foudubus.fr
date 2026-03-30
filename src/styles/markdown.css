@@ -263,6 +263,8 @@
 			box-sizing: border-box;
 			overflow: hidden;
 			hyphens: auto;
+			overflow-wrap: break-word;
+			word-break: normal;
 		}
 
 		.bingo-card:hover {
@@ -301,15 +303,51 @@
 			box-shadow: 0 0 12px rgba(204, 255, 0, 0.45);
 		}
 
+		/* Colonnes étroites : pas de césure auto (souvent disgracieuse) */
+		@media (max-width: 1023px) {
+			.bingo-card {
+				hyphens: none;
+			}
+		}
+
+		/* Toujours 5 colonnes — espacements : serré (mobile) → intermédiaire (tablette) → confort (desktop, valeurs de base) */
 		@media (max-width: 639px) {
 			.bingo-grid {
-				grid-template-columns: repeat(2, 1fr);
+				gap: 6px;
+				padding: 12px;
+			}
+
+			.bingo-card {
+				padding: 7px;
+				border-radius: 6px;
+				/* Police fluide selon le viewport (pas de scroll dans la case) */
+				font-size: clamp(0.3rem, 0.16rem + 2.35vw, 0.58rem);
+				line-height: 1.12;
+				letter-spacing: -0.015em;
+			}
+
+			.bingo-card.free-space {
+				font-size: clamp(0.28rem, 0.14rem + 2.1vw, 0.52rem);
+				line-height: 1.08;
+				letter-spacing: 0;
 			}
 		}
 
 		@media (min-width: 640px) and (max-width: 1023px) {
 			.bingo-grid {
-				grid-template-columns: repeat(3, 1fr);
+				gap: 10px;
+				padding: 18px;
+			}
+
+			.bingo-card {
+				padding: 12px;
+				font-size: clamp(0.48rem, 0.42rem + 0.65vw, 0.78rem);
+				line-height: 1.22;
+			}
+
+			.bingo-card.free-space {
+				font-size: clamp(0.44rem, 0.38rem + 0.55vw, 0.72rem);
+				line-height: 1.15;
 			}
 		}
 
