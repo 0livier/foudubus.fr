@@ -1,6 +1,6 @@
 {
 	"main": "dist/_worker.js/index.js",
-	"name": "foudubus",
+	"name": "foodubus-fr",
   "compatibility_date": "2025-12-16",
   "compatibility_flags": [
     "nodejs_compat",
