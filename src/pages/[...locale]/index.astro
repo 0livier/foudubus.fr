@@ -1,166 +1,306 @@
 ---
-import { render, getCollection } from "astro:content";
+import { getCollection } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import config, { monolocale } from "$config";
-import Time from "$utils/time";
 import { canonicalPagePath } from "$utils/canonical-url";
 import Base from "$layouts/Base.astro";
-import Heatmap from "$components/Heatmap.svelte";
-import i18nit from "$i18n";
 import { tagSlug } from "$utils/slug";
 
 export async function getStaticPaths() {
-	// Create path for each locale, omitting default locale from URL
-	return config.i18n.locales.map(locale => ({ params: { locale: config.i18n.defaultLocale === locale ? undefined : locale } }));
+  return config.i18n.locales.map(locale => ({
+    params: { locale: config.i18n.defaultLocale === locale ? undefined : locale }
+  }));
 }
 
 const { locale = config.i18n.defaultLocale } = Astro.params;
 
-const t = i18nit(locale);
-
-// Get preface content for current locale, sorted by timestamp (latest first)
-const prefaces = (
-	await getCollection("preface", preface => {
-		// Handle single locale setup
-		if (monolocale) return true;
-
-		// Extract language and ID from file path structure
-		const [language, id] = preface.id.split("/");
-		preface.id = id;
-
-		// Filter by current locale
-		return language === locale;
-	})
-).sort((a, b) => b.data.timestamp.getTime() - a.data.timestamp.getTime());
-
-// Get published notes for current locale
+// Get published notes
 const notes = await getCollection("note", note => {
-	// Assign type property
-	Reflect.set(note, "type", "note");
-
-	// Filter by publication status and locale
-	let published = !note.data.draft;
-	let localed = monolocale || note.id.split("/")[0] === locale;
-
-	// Filter published notes by current locale
-	return published && localed;
+  const published = !note.data.draft;
+  const localed = monolocale || note.id.split("/")[0] === locale;
+  return published && localed;
 });
 
-// Get published jottings for current locale
-const jottings = await getCollection("jotting", jotting => {
-	// Assign type property
-	Reflect.set(jotting, "type", "jotting");
+// Sort by timestamp descending
+const sorted = [...notes].sort((a, b) => b.data.timestamp.getTime() - a.data.timestamp.getTime());
 
-	// Check monolocale setup or extract language to match locale
-	let localed = monolocale || jotting.id.split("/")[0] === locale;
+// Featured: Lavande series, first chapter
+const lavande = notes
+  .filter(n => n.data.series === "Lavande")
+  .sort((a, b) => a.data.timestamp.getTime() - b.data.timestamp.getTime())[0];
+const lavandeHref = lavande
+  ? getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${monolocale ? lavande.id : lavande.id.split("/").slice(1).join("/")}`))
+  : undefined;
 
-	// Filter published notes by current locale
-	return !jotting.data.draft && localed;
-});
+// Recent articles (excluding Lavande series items, up to 4)
+const recent = sorted.filter(n => n.data.series !== "Lavande").slice(0, 4);
 
-// Combine contents
-let items: { id: string; type?: string; data: { timestamp: Date; tags?: string[]; [key: string]: any } }[] = [];
-
-// Determine which sections to include
-const sections = config.latest || "*";
-
-// Add contents based on config
-if (sections === "*" || sections.includes("note")) items = items.concat(notes);
-if (sections === "*" || sections.includes("jotting")) items = items.concat(jottings);
-
-// Get the latest content for display
-const latest = items.sort((a, b) => b.data.timestamp.getTime() - a.data.timestamp.getTime())[0];
-
-// Spotlight a major text series on homepage
-const majorSeries = "Lavande";
-const majorText = notes
-	.filter(note => note.data.series === majorSeries)
-	.sort((a, b) => a.data.timestamp.getTime() - b.data.timestamp.getTime())[0];
-const majorTextPath = majorText
-	? `/note/${monolocale ? majorText.id : majorText.id.split("/").slice(1).join("/")}`
-	: undefined;
-
-// Get the latest preface for display
-const preface = prefaces[0];
-// Render preface content if available, otherwise use empty object
-const { Content } = preface ? await render(preface) : ({} as any);
+// Helpers
+function noteLine(note: { data: { series?: string; timestamp: Date } }): string {
+  if (note.data.series === "Lavande") return "L";
+  if (note.data.series) return note.data.series.charAt(0).toUpperCase();
+  return String(note.data.timestamp.getDate()).padStart(2, "0");
+}
+function dateShort(d: Date): string {
+  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+const STICKER_COLORS = ["bordeaux", "ticket", "municipal", "warning", "ink"] as const;
+function stickerColor(tag: string, i: number): string {
+  const t = tag.toLowerCase();
+  if (t.includes("fiction") || t.includes("nouvelle")) return "ink";
+  if (t.includes("recette")) return "ticket";
+  if (t.includes("communication") || t.includes("récit")) return "municipal";
+  if (t.includes("récit") || t.includes("distance")) return "bordeaux";
+  return STICKER_COLORS[i % STICKER_COLORS.length];
+}
 ---
 
-<Base title={t("navigation.home")} {locale}>
-	<main class="flex flex-col gap-5 sm:gap-5 grow">
-		{
-			preface && (
-				<section class="flex flex-col">
-					<article class="markdown">
-						<Content />
-					</article>
-					<a href={getRelativeLocaleUrl(locale, canonicalPagePath("/preface"))} class="self-end my-2 text-sm text-secondary">
-						—— {Time.date.locale(preface.data.timestamp, locale)}
-					</a>
-				</section>
-			)
-		}
+<Base title="Accueil" {locale}>
+  <main>
+    <!-- ── WALL / MANIFESTO POSTER ──────────────────────────────────── -->
+    <section style="
+      background: #0c1018;
+      padding: 60px 40px 48px;
+      position: relative; overflow: hidden;
+    ">
+      <!-- Decorations -->
+      <div style="
+        position: absolute; top: 22px; left: 30px;
+        font-family: var(--hand); font-size: 22px;
+        color: var(--ticket); transform: rotate(-6deg);
+      ">colle ici ↓</div>
+      <div style="
+        position: absolute; top: 28px; right: 50px; transform: rotate(8deg);
+        font-family: var(--mono-fd); font-size: 11px; font-weight: 600;
+        text-transform: lowercase; letter-spacing: 0.04em;
+        padding: 3px 9px; border-radius: 2px;
+        background: var(--warning); color: #f3ece0;
+        border: 1px solid rgba(0,0,0,0.15);
+      ">ne pas arracher</div>
 
-		{
-			majorTextPath && (
-				<section class="bg-white rounded-md px-2 py-2 sm:px-1 sm:py-1">
-					<div class="grid gap-6 sm:gap-10 md:grid-cols-[220px_1fr] md:items-center">
-						<a
-								href={getRelativeLocaleUrl(locale, canonicalPagePath(majorTextPath))}
-								class="link font-mono text-sm tracking-[0.2em]  mt-2"
-							>
-							<img
-								src="/images/lavande/lavande.png"
-								alt="Illustration de la série Lavande"
-								class="w-full max-w-[220px] justify-self-center md:justify-self-start"
-								loading="lazy"
-							/>
-						</a>
+      <!-- The poster -->
+      <div style="
+        position: relative;
+        background: #f3ece0; color: #161210;
+        padding: 52px 48px 44px;
+        transform: rotate(-1.2deg);
+        box-shadow: 0 18px 40px rgba(0,0,0,0.55), 0 4px 0 rgba(0,0,0,0.2);
+        max-width: 720px; margin: 0 auto;
+      ">
+        <!-- Tape strips -->
+        <div class="tape" style="top: -10px; left: 40px; transform: rotate(-8deg);"></div>
+        <div class="tape" style="top: -10px; right: 60px; transform: rotate(7deg);"></div>
+        <div class="tape" style="bottom: -10px; left: 100px; transform: rotate(4deg);"></div>
 
-						<article class="flex flex-col gap-3">
-							<p class="font-mono text-xs tracking-[0.25em] text-secondary uppercase">A lire...</p>
-							<a
-								href={getRelativeLocaleUrl(locale, canonicalPagePath(majorTextPath))}
-								class="link font-mono text-sm tracking-[0.2em]  mt-2"
-							>
-							<h2 class="text-3xl sm:text-4xl font-semibold" style="color: var(--primary-color-light)">{majorSeries}</h2>
-								Premier chapitre, Eidolon →
-							</a>
-						</article>
-					</div>
-				</section>
-			)
-		}
+        <!-- Manifesto header -->
+        <div style="
+          font-family: var(--mono-fd); font-size: 10px;
+          letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 18px;
+        ">⌬ MANIFESTE&nbsp;&nbsp;/&nbsp;&nbsp;N°1&nbsp;&nbsp;/&nbsp;&nbsp;16.12.2025&nbsp;&nbsp;/&nbsp;&nbsp;TIRAGE 200 EX.</div>
 
-		{
-			latest && (
-				<footer class="flex items-center justify-center flex-wrap-reverse gap-10 sm:gap-5">
-					<Heatmap {locale} {notes} {jottings} weeks={20} />
+        <!-- Big headline -->
+        <h1 style="
+          font-family: var(--bebas);
+          font-size: clamp(64px, 12vw, 110px);
+          line-height: 0.86; letter-spacing: 0.005em;
+          margin: 0 0 12px; font-weight: 400;
+          color: #161210;
+        ">
+          ÊTRE<br/>
+          <span style="color: var(--bordeaux);">BARRÉ·E,</span><br/>
+          C'EST<br/>
+          <span style="
+            background: var(--ticket); padding: 0 8px;
+            display: inline-block; transform: skewX(-4deg);
+          ">NÉCESSAIRE.</span>
+        </h1>
 
-					<blockquote class="grow flex flex-col">
-						<h4>{t("home.latest")}</h4>
-						<div class="flex flex-col sm:flex-row justify-between gap-1 mt-1">
-							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/${latest.type}/${monolocale ? latest.id : latest.id.split("/").slice(1).join("/")}`))} class="link">
-								{latest.data.series && `${latest.data.series} | `}
-								{latest.data.title}
-							</a>
-							<div class="flex gap-1">
-								{latest.data.tags?.map((tag, i) => (
-									<>
-									{i > 0 ? ", " : ""}
-									<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${tagSlug(tag)}`))} class="text-remark text-[1rem] link">
-										{tag}
-									</a>
-									</>
-								))}
-							</div>
-						</div>
-						<time datetime={latest.data.timestamp.toISOString()} class="text-remark font-mono text-xs">
-							{Time.date.locale(latest.data.timestamp, locale)}
-						</time>
-					</blockquote>
-				</footer>
-			)
-		}
-	</main>
+        <!-- Divider -->
+        <div style="display: flex; gap: 14px; align-items: center; margin: 14px 0 22px;">
+          <div style="flex: 1; height: 3px; background: #161210;"></div>
+          <div class="halftone" style="width: 60px; height: 14px;"></div>
+          <div style="flex: 1; height: 3px; background: #161210;"></div>
+        </div>
+
+        <!-- Manifesto paragraphs -->
+        <p style="
+          font-size: 15px; line-height: 1.6; margin-bottom: 14px; color: #1a1410;
+          columns: 2; column-gap: 22px; user-select: text;
+        ">On l'a toutes et tous déjà croisée. La personne qui parle seule dans le bus de 18h. Un chat sur l'épaule. Qui s'ambiance sur une musique bien trop forte. Dandy, gothique ou alors rococo. Tatouée. Les gens détournent le regard. Trop bizarre. Trop intense. Et parfois… on entend une phrase tellement évidente qu'on se demande comment on n'y avait jamais pensé. Un rire franc qui coupe le silence triste des transports. Un regard qui nous dépasse.</p>
+        <p style="font-size: 15px; line-height: 1.6; margin-bottom: 14px; color: #1a1410; font-weight: 600; user-select: text;">C'est un peu ça, la folle ou le fou du bus. Une fissure dans la normalité. Quelqu'un qui refuse les cases. Les grandes maisons d'éditions sont descendues de ce bus depuis longtemps.</p>
+        <p style="font-size: 15px; line-height: 1.6; margin-bottom: 0; color: #1a1410; user-select: text;">Elles se garent trop souvent dans les beaux quartiers. En SUV. Elles ne froissent personne et publient au moment qui maximise les profits. Quelle folie. Ici, on distribue au fil de l'eau ce qu'on aimerait avoir dans le bus un lundi matin gris. Ce qui nous fait dire tout haut « Putain, oui. » Et passer pour des fous.</p>
+
+        <!-- CTA -->
+        <div style="margin-top: 28px; display: flex; align-items: center; gap: 22px; flex-wrap: wrap;">
+          <div style="
+            font-family: var(--bebas); font-size: 42px; letter-spacing: 0.02em;
+            background: #161210; color: #f0c14b;
+            padding: 8px 18px; transform: rotate(-2deg);
+            box-shadow: 4px 4px 0 var(--bordeaux);
+          ">MONTEZ →</div>
+          <div style="font-family: var(--hand); font-size: 32px; color: var(--bordeaux); transform: rotate(2deg);">
+            On va se marrer.
+          </div>
+        </div>
+
+        <!-- Signature -->
+        <div style="
+          margin-top: 32px;
+          display: flex; justify-content: space-between; align-items: flex-end;
+          border-top: 1px dashed #161210; padding-top: 14px;
+          font-family: var(--mono-fd); font-size: 10px;
+          letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75;
+        ">
+          <span>Pour les barré·es. Et les autres, si.</span>
+          <span class="stamp stamp-strong" style="transform: rotate(-4deg);">16 déc. 2025</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── RÉCEMMENT PUBLIÉ·E·S ──────────────────────────────────────── -->
+    <section style="padding: 52px 48px 16px; display: flex; align-items: center; gap: 14px; color: var(--primary-color);">
+      <div class="halftone" style="width: 50px; height: 22px; opacity: 0.6;"></div>
+      <div style="font-family: var(--bebas); font-size: 36px; letter-spacing: 0.03em;">RÉCEMMENT PUBLIÉ·E·S</div>
+      <div style="flex: 1; height: 3px; background: currentColor;"></div>
+      <a href={getRelativeLocaleUrl(locale, canonicalPagePath("/feed.xml"))} target="_blank" style="
+        font-family: var(--mono-fd); font-size: 11px; font-weight: 600;
+        text-transform: lowercase; letter-spacing: 0.04em;
+        padding: 3px 9px; border-radius: 2px;
+        background: var(--ticket); color: #161210;
+        border: 1px solid rgba(0,0,0,0.15);
+      ">flux</a>
+    </section>
+
+    <!-- ── ARTICLE GRID ───────────────────────────────────────────────── -->
+    <section style="
+      padding: 0 48px 52px;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 18px;
+    ">
+      <!-- Featured: Lavande (spans 2 rows) -->
+      {lavande && lavandeHref && (
+        <a href={lavandeHref} style="
+          grid-row: span 2;
+          background: #f3ece0; color: #161210;
+          padding: 24px 26px; position: relative;
+          transform: rotate(-0.6deg);
+          box-shadow: 0 8px 22px rgba(0,0,0,0.4);
+          text-decoration: none; display: block;
+        ">
+          <div class="tape" style="top: -10px; right: 40px; transform: rotate(6deg); width: 60px;"></div>
+          <!-- Cover image -->
+          <img
+            src="/images/lavande/lavande.png"
+            alt="Série Lavande"
+            style="width: 100%; height: 160px; object-fit: cover; display: block;"
+            loading="lazy"
+            onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+          />
+          <!-- Fallback placeholder -->
+          <div style="
+            display: none; height: 160px; width: 100%;
+            background: repeating-linear-gradient(45deg, #ece2d1, #ece2d1 6px, #16121011 6px, #16121011 12px);
+            border: 1px dashed #16121066;
+            align-items: center; justify-content: center;
+            font-family: var(--mono-fd); font-size: 10px;
+            letter-spacing: 0.1em; text-transform: uppercase; color: #161210; opacity: 0.85;
+          ">[ couverture ]</div>
+
+          <!-- Stickers -->
+          <div style="display: flex; gap: 6px; margin: 14px 0 8px; flex-wrap: wrap;">
+            <span class="sticker sticker-bordeaux angle-3">série</span>
+            <span class="sticker sticker-ink angle-1">fiction</span>
+          </div>
+
+          <h3 style="
+            font-family: var(--serif-display); font-size: 44px; line-height: 1;
+            font-style: italic; font-weight: 500; margin: 4px 0 6px;
+            color: var(--bordeaux);
+          ">Lavande</h3>
+          <div style="font-family: var(--bebas); font-size: 18px; letter-spacing: 0.06em; opacity: 0.85; margin-bottom: 10px;">
+            EIDOLON · 8 CHAPITRES
+          </div>
+          <p style="font-size: 14px; line-height: 1.55; margin-bottom: 14px; user-select: text;">
+            Une nouvelle en huit stations. Un revenant qui n'arrive pas tout de suite à se rappeler pourquoi il est revenu.
+          </p>
+          <div style="
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px dashed #161210; padding-top: 10px;
+          ">
+            <span class="stamp stamp-strong" style="transform: rotate(-3deg);">chapitre 1 →</span>
+            <span style="font-family: var(--mono-fd); font-size: 10px; letter-spacing: 0.14em; opacity: 0.7;">25.02.2026</span>
+          </div>
+        </a>
+      )}
+
+      <!-- Recent article cards -->
+      {recent.map((note, i) => {
+        const noteId = monolocale ? note.id : note.id.split("/").slice(1).join("/");
+        const href = getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${noteId}`));
+        const line = noteLine(note);
+        const ds = dateShort(note.data.timestamp);
+        const tilt = [0.4, -0.3, 0.2, -0.5][i % 4];
+        return (
+          <a href={href} style={`
+            background: var(--block-color);
+            color: var(--primary-color);
+            padding: 18px 20px;
+            border: 1.5px solid var(--primary-color);
+            position: relative;
+            transform: rotate(${tilt}deg);
+            text-decoration: none; display: block;
+          `}>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <span class="stamp stamp-strong" style="color: var(--bordeaux); transform: rotate(-2deg);">{ds}</span>
+              <span style="font-family: var(--bebas); font-size: 22px; color: var(--ticket);">L.{line}</span>
+            </div>
+            <h4 style="
+              font-family: var(--serif-display); font-size: 26px; line-height: 1.05;
+              font-style: italic; font-weight: 500; margin: 4px 0 6px;
+            ">{note.data.series ? `${note.data.series} · ${note.data.title.toLowerCase()}` : note.data.title}</h4>
+            {note.data.description && (
+              <p style="font-size: 13px; line-height: 1.5; opacity: 0.82; margin-bottom: 8px; user-select: text;">
+                {note.data.description.slice(0, 110)}…
+              </p>
+            )}
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px;">
+              {(note.data.tags ?? []).map((tag, ti) => (
+                <span class={`sticker sticker-${stickerColor(tag, ti)} angle-${(ti % 4) + 1}`}>
+                  <span style="opacity:0.7;font-size:9px;margin-right:1px;">#</span>{tag.toLowerCase()}
+                </span>
+              ))}
+            </div>
+          </a>
+        );
+      })}
+    </section>
+
+    <!-- Voir tous link -->
+    <div style="
+      padding: 0 48px 52px;
+      display: flex; justify-content: flex-end;
+    ">
+      <a href={getRelativeLocaleUrl(locale, canonicalPagePath("/note"))} style="
+        font-family: var(--mono-fd); font-size: 11px;
+        letter-spacing: 0.16em; text-transform: uppercase;
+        color: var(--ticket); border-bottom: 1px solid var(--ticket);
+        padding-bottom: 2px;
+      ">VOIR TOUS LES ÉCRITS →</a>
+    </div>
+  </main>
 </Base>
+
+<style>
+  @media (max-width: 700px) {
+    section[style*="grid-template-columns"] {
+      grid-template-columns: 1fr !important;
+    }
+    section[style*="grid-template-columns"] > a:first-child {
+      grid-row: span 1 !important;
+    }
+  }
+  @media (max-width: 639px) {
+    section { padding-left: 16px !important; padding-right: 16px !important; }
+  }
+</style>

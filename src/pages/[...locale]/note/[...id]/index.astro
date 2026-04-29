@@ -2,20 +2,17 @@
 import { getCollection, render } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import config, { monolocale } from "$config";
-import Time from "$utils/time";
 import Base from "$layouts/Base.astro";
 import TOC from "$components/TOC.astro";
-import Position from "$components/Position.astro";
-import Icon from "$components/Icon.svelte";
 import Sensitive from "$components/Sensitive.svelte";
-import i18nit from "$i18n";
+import ReadingBar from "$components/ReadingBar.svelte";
+import Position from "$components/Position.astro";
 import { tagSlug } from "$utils/slug";
 import { canonicalPath, canonicalPagePath } from "$utils/canonical-url";
 
 export async function getStaticPaths() {
 	const notes = await getCollection("note", note => !note.data.draft);
 
-	/** Resolve (locale, id) for a note. Inlined so it is in scope in all execution contexts. */
 	function toRoute(note: { id: string }) {
 		if (monolocale) {
 			return { locale: undefined as string | undefined, id: note.id };
@@ -26,7 +23,6 @@ export async function getStaticPaths() {
 		return { locale, id };
 	}
 
-	// Group notes by locale, then by series; sort each series by timestamp (asc), then top (desc)
 	const byLocale = new Map<string | undefined, typeof notes>();
 	for (const note of notes) {
 		const { locale } = toRoute(note);
@@ -67,134 +63,218 @@ export async function getStaticPaths() {
 const { locale = config.i18n.defaultLocale } = Astro.params;
 const { note, prev, next } = Astro.props;
 
-// Render markdown content and extract headings for TOC
 const { Content, headings, remarkPluginFrontmatter: frontmatter } = await render(note);
-
-const t = i18nit(locale);
 
 const canonicalPathname = canonicalPath(Astro.url.pathname);
 const articleCanonicalUrl = new URL(canonicalPathname, Astro.site);
 const articleImageUrl = new URL(`${canonicalPathname}/graph.png`, Astro.site);
+
+function noteLine(note: any): string {
+  if (note.data.series === "Lavande") return "L";
+  if (note.data.series) return note.data.series.charAt(0).toUpperCase();
+  return String(new Date(note.data.timestamp).getDate()).padStart(2, "0");
+}
+function dateShort(d: Date): string {
+  const dt = new Date(d);
+  return `${String(dt.getDate()).padStart(2, "0")}.${String(dt.getMonth() + 1).padStart(2, "0")}`;
+}
+const STICKER_COLORS = ["ticket", "bordeaux", "municipal", "warning", "ink"] as const;
+function stickerColor(tag: string, i: number): string {
+  const t = tag.toLowerCase();
+  if (t.includes("fiction") || t.includes("nouvelle")) return "ink";
+  if (t.includes("recette")) return "ticket";
+  if (t.includes("communication")) return "municipal";
+  return STICKER_COLORS[i % STICKER_COLORS.length];
+}
+
+const line = noteLine(note);
+const ds = dateShort(note.data.timestamp);
+const notesHref = getRelativeLocaleUrl(locale, canonicalPagePath("/note"));
 ---
 
 <Base
-	title={note.data.title}
-	{locale}
-	description={note.data.description ?? ""}
-	series={note.data.series}
-	article={{
-		timestamp: note.data.timestamp,
-		section: note.data.series,
-		tags: note.data.tags,
-		mainEntityOfPage: articleCanonicalUrl.toString(),
-		image: articleImageUrl.toString()
-	}}
-	openGraph={note.data.openGraph}
-	twitter={note.data.twitter}
+  title={note.data.title}
+  {locale}
+  description={note.data.description ?? ""}
+  series={note.data.series}
+  article={{
+    timestamp: note.data.timestamp,
+    section: note.data.series,
+    tags: note.data.tags,
+    mainEntityOfPage: articleCanonicalUrl.toString(),
+    image: articleImageUrl.toString()
+  }}
+  openGraph={note.data.openGraph}
+  twitter={note.data.twitter}
 >
-	<main class="flex flex-col gap-6">
-		{
-			note.data.series && (prev || next) && (
-				<nav class="flex flex-wrap items-center justify-between gap-4 pb-6" aria-label={t("note.series")}>
-					{
-						prev ? (
-							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${prev.id}`))} class="link inline-flex items-center gap-1 text-[0.875rem] text-secondary">
-								<Icon name="lucide--arrow-left" class="rtl:rotate-180 shrink-0" />
-								<span>{t("note.prevChapter")}</span>
-							</a>
-						) : (
-							<span />
-						)
-					}
-					{
-						next ? (
-							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${next.id}`))} class="link inline-flex items-center gap-1 text-[0.875rem] text-secondary ms-auto">
-								<span>{t("note.nextChapter")}</span>
-								<Icon name="lucide--arrow-right" class="rtl:rotate-180 shrink-0" />
-							</a>
-						) : (
-							<span />
-						)
-					}
-				</nav>
-			)
-		}
+  <ReadingBar client:load />
 
-		<header class="flex flex-col gap-4" {...(note.data.series && { "data-series": note.data.series })}>
-			<h1>{note.data.title}</h1>
-			<div class="flex flex-col gap-3 sm:flex-row *:flex *:items-center *:gap-1 *:text-[0.875rem] *:text-secondary">
-				<time datetime={note.data.timestamp.toISOString()}><Icon name="lucide--calendar" />{Time.date.locale(note.data.timestamp, locale)}</time>
-				{
-					note.data.series && (
-						<span>
-							<Icon name="lucide--layers" />
-							<a href={`${getRelativeLocaleUrl(locale, canonicalPagePath("/note"))}?series=${encodeURIComponent(note.data.series)}`} class="link text-inherit !text-[1rem]">{note.data.series}</a>
-						</span>
-					)
-				}
-				{
-					!!note.data.tags?.length && (
-						<span class="inline-flex flex-wrap items-center gap-x-1 gap-y-0.5">
-							<Icon name="lucide--hash" />
-							{note.data.tags?.map((tag, i) => (
-								<>
-									{i ? "; " : ""}
-									<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${tagSlug(tag)}`))} class="link text-inherit !text-[1rem]">{tag}</a>
-								</>
-							))}
-						</span>
-					)
-				}
-				<span><Icon name="lucide--pilcrow" />{t("read.words", { words: frontmatter.words })}</span>
-			</div>
-			<hr class="border-b border-weak" />
-		</header>
+  <main style="padding: 52px 48px 0; max-width: 820px; margin: 0 auto;">
+    <!-- Back link -->
+    <a href={notesHref} style="
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--mono-fd); font-size: 10px;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--primary-color); opacity: 0.6;
+      text-decoration: none; margin-bottom: 36px;
+    ">← retour aux écrits</a>
 
-		<Sensitive {locale} back="/note" sensitive={note.data.sensitive} client:load>
-			<div class="flex gap-5">
-				<section id="markdown-content" class="markdown"><Content /></section>
-				{
-					note.data.toc && (
-						<aside class="hidden sm:block sm:shrink-0 sm:w-[200px]">
-							<div class="sticky top-3 flex flex-col gap-1">
-								<h4>{t("note.contents")}</h4>
-								<nav class="overflow-y-auto">
-									<TOC {headings} />
-								</nav>
-							</div>
-						</aside>
-					)
-				}
-			</div>
-		</Sensitive>
+    <!-- Title block -->
+    <header style="margin-bottom: 40px;">
+      <!-- Meta line -->
+      <div style="
+        display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+        margin-bottom: 18px;
+      ">
+        <span style="
+          background: var(--accent-color); color: var(--background-color);
+          font-family: var(--bebas); font-size: 16px; padding: 2px 8px;
+          letter-spacing: 0.08em;
+        ">L.{line}</span>
+        {note.data.series && (
+          <span style="
+            font-family: var(--mono-fd); font-size: 10px;
+            letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.65;
+          ">{note.data.series}</span>
+        )}
+        <span style="
+          font-family: var(--mono-fd); font-size: 10px;
+          letter-spacing: 0.12em; opacity: 0.5;
+        ">{frontmatter.words} mots</span>
+      </div>
 
-		{
-			note.data.series && (prev || next) && (
-				<nav class="flex flex-wrap items-center justify-between gap-4 border-t border-weak pt-6" aria-label={t("note.series")}>
-					{
-						prev ? (
-							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${prev.id}`))} class="link inline-flex items-center gap-1 text-[0.875rem] text-secondary">
-								<Icon name="lucide--arrow-left" class="rtl:rotate-180 shrink-0" />
-								<span>{t("note.prevChapter")}</span>
-							</a>
-						) : (
-							<span />
-						)
-					}
-					{
-						next ? (
-							<a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${next.id}`))} class="link inline-flex items-center gap-1 text-[0.875rem] text-secondary ms-auto">
-								<span>{t("note.nextChapter")}</span>
-								<Icon name="lucide--arrow-right" class="rtl:rotate-180 shrink-0" />
-							</a>
-						) : (
-							<span />
-						)
-					}
-				</nav>
-			)
-		}
+      <!-- H1 -->
+      <h1 style="
+        font-family: var(--serif-display); font-style: italic;
+        font-size: clamp(40px, 7vw, 72px); font-weight: 500;
+        line-height: 1; margin: 0 0 20px;
+        color: var(--primary-color);
+      ">{note.data.title}</h1>
 
-		<Position {locale} />
-	</main>
+      <!-- Date + tags row -->
+      <div style="
+        display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+        margin-bottom: 14px;
+      ">
+        <span class="stamp stamp-strong" style="transform: rotate(-1.5deg);">{ds}</span>
+        <span style="
+          font-family: var(--mono-fd); font-size: 9px;
+          letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.5;
+        ">{note.data.timestamp.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }).toUpperCase()}</span>
+      </div>
+
+      {note.data.tags && note.data.tags.length > 0 && (
+        <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 20px;">
+          {note.data.tags.map((tag: string, ti: number) => (
+            <a
+              href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${tagSlug(tag)}`))}
+              class={`sticker sticker-${stickerColor(tag, ti)} angle-${(ti % 4) + 1}`}
+              style="text-decoration: none;"
+            >
+              <span style="opacity:0.7;font-size:9px;margin-right:1px;">#</span>{tag.toLowerCase()}
+            </a>
+          ))}
+        </div>
+      )}
+
+      <div style="
+        border-top: 1px dashed color-mix(in srgb, var(--primary-color) 22%, transparent);
+        padding-top: 14px;
+        display: flex; align-items: center; gap: 14px;
+      ">
+        <div class="halftone" style="width: 40px; height: 10px; opacity: 0.4;"></div>
+        <div style="flex: 1; height: 1px; background: color-mix(in srgb, var(--primary-color) 10%, transparent);"></div>
+      </div>
+    </header>
+
+    <!-- Article body -->
+    <Sensitive {locale} back="/note" sensitive={note.data.sensitive} client:load>
+      <div style="display: flex; gap: 40px; align-items: flex-start;">
+        <section id="markdown-content" class="markdown article-body" style="flex: 1; min-width: 0;">
+          <Content />
+        </section>
+        {note.data.toc && (
+          <aside style="
+            display: none; flex-shrink: 0; width: 180px;
+          " class="toc-aside">
+            <div style="position: sticky; top: 80px;">
+              <div style="
+                font-family: var(--mono-fd); font-size: 10px;
+                letter-spacing: 0.16em; text-transform: uppercase;
+                opacity: 0.6; margin-bottom: 10px;
+              ">sommaire</div>
+              <nav>
+                <TOC {headings} />
+              </nav>
+            </div>
+          </aside>
+        )}
+      </div>
+    </Sensitive>
+
+    <!-- End ornament -->
+    <div style="
+      text-align: center; margin: 40px 0;
+      font-family: var(--serif-display); font-size: 20px;
+      color: var(--accent-color); letter-spacing: 0.4em;
+      opacity: 0.7;
+    ">◆ — fin — ◆</div>
+
+    <!-- Composté bar -->
+    <div style="
+      border: 1px dashed color-mix(in srgb, var(--primary-color) 25%, transparent);
+      padding: 12px 18px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-family: var(--mono-fd); font-size: 10px;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      opacity: 0.65; margin-bottom: 40px;
+    ">
+      <span>éditions du fou du bus · {ds}</span>
+      <span class="stamp stamp-strong" style="transform: rotate(-2deg); opacity: 0.8;">composté</span>
+    </div>
+
+    <!-- Prev / Next navigation -->
+    {note.data.series && (prev || next) && (
+      <nav style="
+        display: flex; justify-content: space-between; align-items: center;
+        gap: 20px; flex-wrap: wrap;
+        border-top: 2px solid color-mix(in srgb, var(--primary-color) 15%, transparent);
+        padding-top: 24px; margin-bottom: 48px;
+      ">
+        {prev ? (
+          <a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${prev.id}`))} style="
+            font-family: var(--mono-fd); font-size: 11px;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--primary-color); opacity: 0.7; text-decoration: none;
+            display: flex; flex-direction: column; gap: 4px; max-width: 240px;
+          ">
+            <span style="color: var(--ticket);">← arrêt précédent</span>
+            <span style="font-family: var(--serif-display); font-style: italic; font-size: 18px; font-weight: 500; opacity: 1; letter-spacing: 0;">{prev.title}</span>
+          </a>
+        ) : <span />}
+        {next ? (
+          <a href={getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${next.id}`))} style="
+            font-family: var(--mono-fd); font-size: 11px;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: var(--primary-color); opacity: 0.7; text-decoration: none;
+            display: flex; flex-direction: column; align-items: flex-end; gap: 4px; max-width: 240px;
+          ">
+            <span style="color: var(--ticket);">prochain arrêt →</span>
+            <span style="font-family: var(--serif-display); font-style: italic; font-size: 18px; font-weight: 500; opacity: 1; letter-spacing: 0; text-align: right;">{next.title}</span>
+          </a>
+        ) : <span />}
+      </nav>
+    )}
+
+    <Position {locale} />
+  </main>
 </Base>
+
+<style>
+  @media (min-width: 700px) {
+    .toc-aside { display: block !important; }
+  }
+  @media (max-width: 639px) {
+    main { padding-left: 16px !important; padding-right: 16px !important; }
+  }
+</style>

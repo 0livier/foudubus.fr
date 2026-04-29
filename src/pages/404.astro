@@ -2,12 +2,96 @@
 import Base from "$layouts/Base.astro";
 ---
 
-<Base title="404">
-	<main class="contents">
-		<div class="inline-flex flex-col items-center justify-center gap-2 text-center grow-[0.5] animate-shaky">
-			<span class="text-6xl font-bold">404</span>
-			<span class="text-2xl font-bold">Not Found</span>
-		</div>
-		<a href="/" class="text-lg text-center link">&gt; Back</a>
-	</main>
+<Base title="404 — T'as loupé l'arrêt">
+  <main style="
+    min-height: 70vh;
+    display: flex; flex-direction: column;
+    padding: 60px 48px 0;
+    align-items: center;
+    justify-content: center;
+  ">
+    <!-- Poster taped on wall -->
+    <div style="
+      position: relative;
+      background: #f3ece0; color: #161210;
+      padding: 48px 56px 40px;
+      max-width: 620px; width: 100%;
+      transform: rotate(-1.4deg);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.55), 0 4px 0 rgba(0,0,0,0.2);
+    ">
+      <!-- Tape strips -->
+      <div class="tape" style="top: -10px; left: 60px; transform: rotate(-6deg);"></div>
+      <div class="tape" style="top: -10px; right: 80px; transform: rotate(8deg);"></div>
+      <div class="tape" style="bottom: -10px; left: calc(50% - 40px); transform: rotate(3deg);"></div>
+
+      <!-- LED strip -->
+      <div class="led-strip" style="margin-bottom: 28px;">▸ HORS-SERVICE · LIGNE INCONNUE</div>
+
+      <!-- Notice header -->
+      <div style="
+        font-family: var(--mono-fd); font-size: 11px;
+        letter-spacing: 0.22em; text-transform: uppercase; margin-bottom: 14px;
+      ">⌬ AVIS AUX VOYAGEUR·SES · 404</div>
+
+      <!-- Main headline -->
+      <h1 style="
+        font-family: var(--bebas); font-size: clamp(56px, 12vw, 96px);
+        line-height: 0.86; letter-spacing: 0.005em;
+        margin: 0 0 14px; font-weight: 400;
+        color: #161210;
+      ">
+        T'AS LOUPÉ<br/>
+        <span style="
+          background: var(--ticket); padding: 0 8px;
+          display: inline-block; transform: skewX(-4deg);
+        ">L'ARRÊT.</span>
+      </h1>
+
+      <!-- Divider -->
+      <div style="display: flex; gap: 14px; align-items: center; margin: 14px 0 22px;">
+        <div style="flex: 1; height: 3px; background: #161210;"></div>
+        <div class="halftone" style="width: 60px; height: 14px;"></div>
+        <div style="flex: 1; height: 3px; background: #161210;"></div>
+      </div>
+
+      <!-- Body text -->
+      <p style="font-size: 17px; line-height: 1.6; margin-bottom: 14px; color: #1a1410; user-select: text;">
+        Cette page n'existe pas. Ou n'existe plus. Ou alors elle existe ailleurs, sur un autre site, dans un autre bus, dans une autre ville. On n'a pas vraiment le moyen de savoir.
+      </p>
+      <p style="font-size: 17px; line-height: 1.6; margin-bottom: 18px; color: #1a1410; font-style: italic; user-select: text;">
+        Tu peux redescendre, attendre cinq minutes, et reprendre le suivant. Il finit par passer.
+      </p>
+
+      <!-- CTAs -->
+      <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-top: 22px;">
+        <a href="/" style="
+          font-family: var(--bebas); font-size: 30px; letter-spacing: 0.02em;
+          background: #161210; color: #f0c14b;
+          padding: 8px 16px; transform: rotate(-1deg);
+          box-shadow: 4px 4px 0 var(--bordeaux);
+          display: inline-block;
+        ">← TÊTE DE LIGNE</a>
+        <span style="font-family: var(--hand); font-size: 26px; color: var(--bordeaux); transform: rotate(2deg); display: inline-block;">ou bien</span>
+        <a href="/note" style="
+          font-family: var(--bebas); font-size: 24px; letter-spacing: 0.02em;
+          background: var(--ticket); color: #161210;
+          padding: 6px 14px; transform: rotate(1deg);
+          box-shadow: 4px 4px 0 #161210;
+          display: inline-block;
+        ">▸ TOUS LES ÉCRITS</a>
+      </div>
+
+      <!-- Signature -->
+      <div style="
+        margin-top: 32px;
+        display: flex; justify-content: space-between; align-items: flex-end;
+        border-top: 1px dashed #161210; padding-top: 14px;
+        font-family: var(--mono-fd); font-size: 10px;
+        letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.75;
+      ">
+        <span>code 404 · personne ne pleure</span>
+        <span class="stamp stamp-strong" style="color: var(--bordeaux); transform: rotate(-4deg);">non valable</span>
+      </div>
+    </div>
+  </main>
 </Base>

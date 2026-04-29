@@ -29,14 +29,10 @@ const title = config.title;
 	import zoom from "medium-zoom/dist/pure";
 	import Time from "$utils/time";
 
-	// Set the `title` attribute of all `<time>` elements to localized date-time strings
 	const localizeTimes = () => document.querySelectorAll("time").forEach(time => time.dateTime && (time.title = Time.locale(time.dateTime, navigator.language, Time.userTimezone)));
 
-	// Add zoom effect to images within markdown content
 	window.zoom = () => zoom(".markdown img:not([data-nozoom])", { background: "#00000044" });
 
-	// Sync data-series from main (or first element with it) to body for accent theming (e.g. Lavande).
-	// Needed because Swup replaces only the main content, not the body.
 	function syncBodySeries() {
 		const el = document.querySelector("main [data-series]");
 		const value = el?.getAttribute("data-series");
@@ -49,7 +45,6 @@ const title = config.title;
 
 	let bingoInteractionBound = false;
 
-	/** Bingo cards: click / Enter / Space to toggle .selected (markdown notes only). */
 	function initBingoCardSelection() {
 		document.querySelectorAll(".markdown .bingo-card").forEach(card => {
 			card.setAttribute("tabindex", "0");
@@ -70,7 +65,6 @@ const title = config.title;
 		});
 	}
 
-	// Page initialization function
 	function initialize() {
 		syncBodySeries();
 		localizeTimes();
@@ -78,13 +72,10 @@ const title = config.title;
 		initBingoCardSelection();
 	}
 
-	// Execute initialization on first load
 	initialize();
 
-	// Listen for page load event and re-initialize on page transitions
 	document.addEventListener("astro:page-load", initialize);
 
-	// Sync body data-series after Swup replaces content (no full reload)
 	if (typeof window !== "undefined" && window.swup) {
 		window.swup.hooks.on("page:load", syncBodySeries);
 	}
@@ -102,16 +93,11 @@ const title = config.title;
 	twitterOverride={twitterOverride}
 >
 	<Tip client:load />
-	<div class="flex flex-col mx-auto px-3 w-[min(100%,1000px)]">
-		<div id="body" class="flex flex-col min-h-screen">
-			<header class="sticky top-0 flex items-center justify-between pt-3 pb-1 mb-4 bg-background z-4 sm:static sm:pb-12">
-				<a href={getRelativeLocaleUrl(locale)} class="text-lg sm:text-2xl font-bold">{title}</a>
-				<Navigator {locale} {route} client:load />
-			</header>
+	<Navigator {locale} {route} client:load />
 
-			<slot />
-		</div>
-
-		<Footer {locale} author={config.author} copyright={config.copyright} />
+	<div id="body" style="min-height: calc(100vh - 60px);">
+		<slot />
 	</div>
+
+	<Footer {locale} author={config.author} copyright={config.copyright} />
 </App>

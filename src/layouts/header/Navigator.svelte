@@ -1,125 +1,135 @@
 <script lang="ts">
   import { getRelativeLocaleUrl } from "astro:i18n";
   import { onMount } from "svelte";
-  import config, { monolocale } from "$config";
-  import Icon from "$components/Icon.svelte";
-  import i18nit from "$i18n";
+  import config from "$config";
   import { canonicalPagePath } from "$utils/canonical-url";
   import ThemeSwitcher from "./ThemeSwitcher.svelte";
-  import Menu from "./Menu.svelte";
 
   let { locale, route }: { locale: string; route: string } = $props();
 
-  const t = i18nit(locale);
+  const homeRoute        = getRelativeLocaleUrl(locale);
+  const noteRoute        = getRelativeLocaleUrl(locale, canonicalPagePath("/note"));
+  const seriesBaseRoute  = getRelativeLocaleUrl(locale, canonicalPagePath("/series"));
+  const feedRoute        = getRelativeLocaleUrl(locale, canonicalPagePath("/feed.xml"));
 
-  // Define home route and navigation routes configuration
-  const homeRoute = getRelativeLocaleUrl(locale);
-  const routes: { path: string; extra?: string[]; icon: `${string}--${string}`; label: string }[] = [
-    {
-      label: t("navigation.home"),
-      path: homeRoute,
-      extra: [getRelativeLocaleUrl(locale, canonicalPagePath("/preface"))],
-      icon: "lucide--bus"
-    },
-    { label: t("navigation.note"), path: getRelativeLocaleUrl(locale, canonicalPagePath("/note")), icon: "lucide--notebook-pen" }
-    //,{ label: t("navigation.jotting"), path: getRelativeLocaleUrl(locale, "/jotting"), icon: "lucide--feather" }
-  ];
-
-  /**
-   * Check if a route is currently active based on the current route path
-   * @param route - The current route path
-   * @param home - The home route path
-   * @param path - The navigation item path to check against
-   * @param extra - Optional array of additional paths that should be considered active
-   * @returns True if the route is active, false otherwise
-   */
-  function active(path: string, extra?: string[]) {
-    if (extra?.some((item) => item === route)) return true;
-    if (path === homeRoute) return path === route;
+  function isActive(path: string, exact = false): boolean {
+    if (exact) return route === path || route === path + "/";
+    if (path === homeRoute) return route === path || route === path + "/";
     return route.startsWith(path);
   }
 
-  // Control mobile menu visibility state
-  let menu: boolean = $state(false);
-  let navigator: HTMLElement | undefined = $state();
-
-  // Extract path without locale prefix for language switching
-  let path: string | undefined = $derived(
-    route.slice(`/${locale === config.i18n.defaultLocale ? "" : locale}`.length) || undefined
-  );
+  let menu = $state(false);
+  let navEl: HTMLElement | undefined = $state();
 
   onMount(() => {
-    // Close mobile menu when any navigation link is clicked
-    for (const link of navigator!.getElementsByTagName("a")) {
+    for (const link of navEl!.getElementsByTagName("a")) {
       link.addEventListener("click", () => (menu = false));
     }
-
-    // Set up route tracking for page navigation with Swup integration
     const updateRoute = () => (route = window.location.pathname);
     if (window.swup) {
-      // Register route update hook if Swup is already available
       window.swup.hooks.on("page:load", updateRoute);
     } else {
-      // Wait for Swup to be enabled and then register the hook
       document.addEventListener("swup:enable", () => window.swup?.hooks.on("page:load", updateRoute));
     }
   });
 </script>
 
-<button onclick={() => (menu = true)} class="sm:hidden"><Icon name="lucide--align-justify" /></button>
+<!-- Mobile hamburger -->
+<button
+  onclick={() => (menu = true)}
+  aria-label="Menu"
+  class="sm:hidden"
+  style="
+    position: fixed; top: 14px; right: 16px; z-index: 30;
+    font-family: var(--mono-fd); font-size: 18px; letter-spacing: 0.1em;
+    color: var(--primary-color); background: var(--background-color);
+    border: 1px solid currentColor; padding: 4px 10px;
+  "
+>≡</button>
 
+<!-- Mobile backdrop -->
 <!-- svelte-ignore a11y_consider_explicit_label -->
 <button
   onclick={() => (menu = false)}
   class:pointer-events-none={!menu}
-  class:bg-transparent={!menu}
-  class="fixed top-0 start-0 w-screen h-screen pointer-events-auto bg-[#aaaaaa88] transition-[background-color] sm:hidden"
+  class:opacity-0={!menu}
+  style="
+    position: fixed; inset: 0; z-index: 20;
+    background: rgba(12,16,24,0.8);
+    transition: opacity 0.2s;
+    pointer-events: {menu ? 'auto' : 'none'};
+  "
+  class="sm:hidden"
 ></button>
 
-<nav
-  bind:this={navigator}
-  class:translate-x-full={!menu}
-  class:rtl:-translate-x-full={!menu}
-  class="fixed top-0 end-0 flex flex-col justify-between items-start gap-5 p-5 bg-background h-full sm:contents overflow-hidden transition-transform"
+<!-- Header -->
+<header
+  bind:this={navEl}
+  style="
+    position: sticky; top: 0; z-index: 25;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 48px;
+    border-bottom: 2px solid var(--primary-color);
+    background: var(--background-color);
+    color: var(--primary-color);
+    font-family: var(--mono-fd);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  "
 >
-  <header class="grid gap-5 text-secondary grid-rows-[repeat(5,1fr)] sm:grid-rows-none sm:grid-cols-[repeat(4,1fr)]">
-    <button onclick={() => (menu = false)} class="sm:hidden"><Icon name="lucide--x" /></button>
+  <!-- Site logo -->
+  <a
+    href={homeRoute}
+    style="font-family: var(--bebas); font-size: 24px; letter-spacing: 0.06em; color: var(--primary-color);"
+  >※ ÉDITIONS DU FOU DU BUS ※</a>
 
-    {#each routes as item}
-      {@const isActive = active(item.path, item.extra)}
-      <a href={item.path} class="relative inline-flex items-center group" class:max-sm:font-bold={isActive}>
-        <span
-          class="sm:absolute sm:w-full h-full inline-flex items-center sm:justify-center sm:border-b-2 sm:py-1 transition-[border-color] duration-150 ease-linear"
-          class:border-transparent={!isActive}
-          class:border-secondary={isActive}><Icon name={item.icon} /></span
-        >
-        <p
-          class="w-full sm:py-1 px-2.5 sm:text-center sm:text-background sm:bg-primary sm:clip-path-hidden transition-[clip-path] group-hover:clip-path-visible"
-        >
-          {item.label}
-        </p>
-      </a>
+  <!-- Desktop nav (always visible on sm+), mobile slide-in -->
+  <nav
+    style="
+      background: var(--background-color);
+      {!menu ? 'transform: translateX(100%);' : ''}
+    "
+    class="
+      fixed top-0 end-0 flex flex-col gap-8 p-8 h-full z-25 transition-transform
+      sm:!transform-none sm:static sm:flex-row sm:gap-7 sm:p-0 sm:h-auto sm:items-center
+    "
+  >
+    <button onclick={() => (menu = false)} class="sm:hidden self-end mb-2" style="font-size: 1.4rem; color: var(--primary-color);">✕</button>
+
+    {#each [
+      { href: homeRoute, label: 'accueil', exact: true },
+      { href: noteRoute, label: 'écrits', exact: false, exclude: seriesBaseRoute },
+      { href: seriesBaseRoute, label: 'séries', exact: false },
+    ] as item}
+      {@const active = item.exclude
+        ? isActive(item.href, item.exact) && !isActive(item.exclude)
+        : isActive(item.href, item.exact)}
+      <a
+        href={item.href}
+        style="
+          color: var(--primary-color);
+          opacity: {active ? 1 : 0.6};
+          padding-bottom: 3px;
+          border-bottom: 2px solid {active ? 'var(--ticket)' : 'transparent'};
+          transition: border-color 0.15s, opacity 0.15s;
+        "
+      >{item.label}</a>
     {/each}
-  </header>
 
-  <footer class="flex flex-col gap-2 sm:flex-row sm:gap-7">
+    <a
+      href={feedRoute}
+      target="_blank"
+      style="color: var(--primary-color); opacity: 0.6;"
+    >flux</a>
+
     <ThemeSwitcher />
+  </nav>
+</header>
 
-    <a href={getRelativeLocaleUrl(locale, canonicalPagePath("/feed.xml"))} target="_blank" aria-label="Subscription" class="inline-flex"
-      ><Icon name="lucide--rss" /></a
-    >
-
-    {#if !monolocale}
-      <Menu label="Language switcher">
-        {#snippet trigger()}<Icon name="lucide--earth" />{/snippet}
-        <div data-no-swup class="contents">
-          {#each config.i18n.locales as locale}
-            <a href={getRelativeLocaleUrl(locale as string, path ? canonicalPagePath(path) : path)} lang={locale} aria-label={i18nit(locale)("language")}
-              >{i18nit(locale)("language")}</a
-            >
-          {/each}
-        </div>
-      </Menu>
-    {/if}
-  </footer>
-</nav>
+<style>
+  @media (max-width: 639px) {
+    header { padding: 12px 16px; }
+    /* hide title on mobile when menu open to avoid clutter */
+  }
+</style>

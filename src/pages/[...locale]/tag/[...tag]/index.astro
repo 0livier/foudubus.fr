@@ -3,9 +3,6 @@ import { getCollection } from "astro:content";
 import { getRelativeLocaleUrl } from "astro:i18n";
 import config, { monolocale } from "$config";
 import Base from "$layouts/Base.astro";
-import Time from "$utils/time";
-import Icon from "$components/Icon.svelte";
-import i18nit from "$i18n";
 import { tagSlug as toTagSlug } from "$utils/slug";
 import { getTagIntro } from "$utils/tag-intros";
 import { canonicalPagePath } from "$utils/canonical-url";
@@ -14,7 +11,6 @@ export async function getStaticPaths() {
 	const notes = await getCollection("note", (n) => !n.data.draft);
 	const jottings = await getCollection("jotting", (j) => !j.data.draft);
 
-	// Collect (tag, locale) and group by slug so one URL per slug (tags that slug the same share a page)
 	const slugToTagsByLocale = new Map<string, Map<string, Set<string>>>();
 	function addTag(tag: string, locale: string) {
 		const slug = toTagSlug(tag);
@@ -25,15 +21,11 @@ export async function getStaticPaths() {
 	}
 	for (const note of notes) {
 		const locale = monolocale ? config.i18n.defaultLocale : note.id.split("/")[0];
-		note.data.tags?.forEach((tag: string) => {
-			addTag(tag, locale);
-		});
+		note.data.tags?.forEach((tag: string) => addTag(tag, locale));
 	}
 	for (const jotting of jottings) {
 		const locale = monolocale ? config.i18n.defaultLocale : jotting.id.split("/")[0];
-		jotting.data.tags?.forEach((tag: string) => {
-			addTag(tag, locale);
-		});
+		jotting.data.tags?.forEach((tag: string) => addTag(tag, locale));
 	}
 
 	const paths: { params: { locale?: string; tag: string }; props: { tags: string[] } }[] = [];
@@ -42,10 +34,7 @@ export async function getStaticPaths() {
 		for (const [slug, byLocale] of slugToTagsByLocale) {
 			const tags = byLocale.get(locale);
 			if (!tags?.size) continue;
-			paths.push({
-				params: { locale: localeParam, tag: slug },
-				props: { tags: Array.from(tags) }
-			});
+			paths.push({ params: { locale: localeParam, tag: slug }, props: { tags: Array.from(tags) } });
 		}
 	}
 	return paths;
@@ -53,11 +42,9 @@ export async function getStaticPaths() {
 
 const { locale = config.i18n.defaultLocale, tag: tagSlugParam } = Astro.params;
 const { tags: tagList } = Astro.props;
-const tag = [...tagList].sort((a, b) => a.localeCompare(b))[0]; // primary tag for heading
+const tag = [...tagList].sort((a, b) => a.localeCompare(b))[0];
 const tagSlugValue = typeof tagSlugParam === "string" ? tagSlugParam : tagSlugParam?.[0];
 const tagIntro = tagSlugValue ? getTagIntro(tagSlugValue) : undefined;
-
-const t = i18nit(locale);
 
 const notes = await getCollection("note", (note) => {
 	if (note.data.draft) return false;
@@ -76,16 +63,17 @@ const noteItems = notes.map((n) => ({
 	title: n.data.title,
 	timestamp: n.data.timestamp,
 	series: n.data.series,
-	sensitive: n.data.sensitive,
-	top: n.data.top
+	tags: n.data.tags ?? [],
+	top: n.data.top ?? 0
 }));
 const jottingItems = jottings.map((j) => ({
 	type: "jotting" as const,
 	id: j.id,
 	title: j.data.title,
 	timestamp: j.data.timestamp,
-	sensitive: j.data.sensitive,
-	top: j.data.top
+	series: undefined as string | undefined,
+	tags: j.data.tags ?? [],
+	top: j.data.top ?? 0
 }));
 const items = [...noteItems, ...jottingItems].sort(
 	(a, b) => b.top - a.top || b.timestamp.getTime() - a.timestamp.getTime()
@@ -97,50 +85,161 @@ function itemId(item: (typeof items)[0]): string {
 function itemHref(item: (typeof items)[0]): string {
 	return getRelativeLocaleUrl(locale, canonicalPagePath(`/${item.type}/${itemId(item)}`));
 }
+function dateShort(d: Date): string {
+	const dt = new Date(d);
+	return `${String(dt.getDate()).padStart(2, "0")}.${String(dt.getMonth() + 1).padStart(2, "0")}`;
+}
+function noteLine(item: (typeof items)[0]): string {
+	if (item.series === "Lavande") return "L";
+	if (item.series) return item.series.charAt(0).toUpperCase();
+	return String(new Date(item.timestamp).getDate()).padStart(2, "0");
+}
+const STICKER_COLORS = ["ticket", "bordeaux", "municipal", "warning", "ink"] as const;
+function stickerColor(t: string, i: number): string {
+	const tl = t.toLowerCase();
+	if (tl.includes("fiction") || tl.includes("nouvelle")) return "ink";
+	if (tl.includes("recette")) return "ticket";
+	if (tl.includes("communication")) return "municipal";
+	return STICKER_COLORS[i % STICKER_COLORS.length];
+}
+
+// All tags for switcher
+const allNotes = await getCollection("note", (n) => {
+	if (n.data.draft) return false;
+	return monolocale || n.id.split("/")[0] === locale;
+});
+const allTags = Array.from(new Set(allNotes.flatMap(n => n.data.tags ?? []))).sort();
 ---
 
-<Base title={t("tag.title", { tag })} {locale}>
-	<main class="flex flex-col gap-6 grow">
-		<header class="flex flex-col gap-2">
-			<h1>{t("tag.heading", { tag })}</h1>
-			<p class="text-secondary text-sm">{t("tag.count", { count: items.length })}</p>
-		</header>
-		{tagIntro && (
-			<p class="text-secondary max-w-prose">
-				{tagIntro}
-			</p>
-		)}
-		<ul class="flex flex-col gap-4">
-			{items.map((item) => (
-				<li>
-					<section class="flex flex-col gap-2 sm:flex-row sm:items-center">
-						<div class="flex flex-col gap-1">
-							<div class="inline-flex gap-1 items-center flex-wrap [&:not(:has(*))]:hidden">
-								{item.top > 0 && <Icon name="lucide--flag-triangle-right" class="rtl:-scale-x-100" />}
-								{item.sensitive && <Icon name="lucide--siren" title={t("sensitive.icon")} />}
-								{item.type === "note" && "series" in item && item.series && (
-									<span class="text-secondary">{item.series}</span>
-								)}
-							</div>
-							<a href={itemHref(item)} class="link font-medium">
-								{item.title}
-							</a>
-							<time
-								datetime={item.timestamp.toISOString()}
-								class="font-mono text-[0.65rem] leading-none text-remark"
-							>
-								{Time.date.locale(item.timestamp, locale)}
-							</time>
-						</div>
-						<span class="sm:ms-auto text-remark text-sm">
-							{t(`navigation.${item.type}`)}
-						</span>
-					</section>
-				</li>
-			))}
-		</ul>
-		{items.length === 0 && (
-			<p class="text-secondary">{t("tag.empty")}</p>
-		)}
-	</main>
+<Base title={`#${tag}`} {locale}>
+  <main style="padding: 52px 48px 0;">
+    <!-- Tag hero -->
+    <div style="margin-bottom: 40px;">
+      <div style="
+        font-family: var(--mono-fd); font-size: 11px;
+        letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.6;
+        margin-bottom: 10px;
+      ">⌬ STICKER&nbsp;&nbsp;/&nbsp;&nbsp;{items.length} ÉCRITS COLLÉS ICI</div>
+
+      <div style="display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 12px;">
+        <span style="
+          font-family: var(--bebas); font-size: clamp(72px, 14vw, 130px);
+          line-height: 0.85; color: var(--background-color);
+          background: var(--ticket);
+          padding: 4px 16px; transform: skewX(-4deg);
+          display: inline-block; letter-spacing: 0.02em;
+        ">#</span>
+        <h1 style="
+          font-family: var(--bebas); font-size: clamp(60px, 12vw, 110px);
+          line-height: 0.85; letter-spacing: 0.02em; font-weight: 400;
+          margin: 0; color: var(--primary-color);
+        ">{tag.toUpperCase()}</h1>
+      </div>
+
+      {tagIntro && (
+        <p style="
+          font-family: var(--hand); font-size: 22px;
+          color: var(--bordeaux); margin: 0 0 6px;
+        ">{tagIntro}</p>
+      )}
+    </div>
+
+    <!-- Tag switcher -->
+    {allTags.length > 1 && (
+      <div style="
+        margin-bottom: 36px;
+        padding: 16px 18px;
+        border: 1.5px dashed color-mix(in srgb, var(--primary-color) 25%, transparent);
+      ">
+        <div style="
+          font-family: var(--mono-fd); font-size: 10px;
+          letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.6;
+          margin-bottom: 10px;
+        ">⌬ autres stickers</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          {allTags.map((t, i) => (
+            <a
+              href={getRelativeLocaleUrl(locale, canonicalPagePath(`/tag/${toTagSlug(t)}`))}
+              class={`sticker sticker-${tagList.includes(t) ? stickerColor(t, i) : "ghost"} angle-${(i % 4) + 1}`}
+              style={`text-decoration: none; ${tagList.includes(t) ? "outline: 2px solid currentColor; outline-offset: 2px;" : "opacity: 0.55;"}`}
+            >
+              <span style="opacity:0.7;font-size:9px;margin-right:1px;">#</span>{t.toLowerCase()}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- List header -->
+    <div style="
+      display: flex; align-items: center; gap: 14px; margin-bottom: 20px;
+      font-family: var(--mono-fd); font-size: 11px;
+      letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.75;
+    ">
+      <span>▶ {items.length} {items.length > 1 ? 'arrêts' : 'arrêt'}</span>
+      <div class="route-line-h" style="flex: 1; height: 4px; color: var(--ticket);"></div>
+      <span>plus récent ↓</span>
+    </div>
+
+    <!-- Article grid -->
+    <div style="
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      padding-bottom: 52px;
+    ">
+      {items.map((item, idx) => {
+        const tilt = [0.4, -0.3, 0.2, -0.5, 0.3, -0.4][idx % 6];
+        const ds = dateShort(item.timestamp);
+        const line = noteLine(item);
+        return (
+          <a href={itemHref(item)} style={`
+            background: var(--block-color);
+            color: var(--primary-color);
+            padding: 18px 20px;
+            border: 1.5px solid color-mix(in srgb, var(--primary-color) 20%, transparent);
+            position: relative;
+            transform: rotate(${tilt}deg);
+            text-decoration: none; display: block;
+          `}>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <span class="stamp stamp-strong" style="color: var(--bordeaux); transform: rotate(-2deg);">{ds}</span>
+              <span style="font-family: var(--bebas); font-size: 20px; color: var(--ticket);">L.{line}</span>
+            </div>
+            <h3 style="
+              font-family: var(--serif-display); font-size: 22px; line-height: 1.1;
+              font-style: italic; font-weight: 500; margin: 4px 0 6px;
+            ">{item.series ? `${item.series} · ${item.title.toLowerCase()}` : item.title}</h3>
+            <div style="display: flex; gap: 5px; flex-wrap: wrap; margin-top: 8px;">
+              {item.tags.map((t, ti) => (
+                <span class={`sticker sticker-${tagList.includes(t) ? stickerColor(t, ti) : "ghost"} angle-${(ti % 4) + 1}`}
+                  style={tagList.includes(t) ? "outline: 1.5px solid currentColor; outline-offset: 1px;" : "opacity: 0.5;"}>
+                  <span style="opacity:0.7;font-size:9px;margin-right:1px;">#</span>{t.toLowerCase()}
+                </span>
+              ))}
+            </div>
+          </a>
+        );
+      })}
+    </div>
+
+    {items.length === 0 && (
+      <div style="
+        padding: 60px 0; text-align: center;
+        font-family: var(--mono-fd); font-size: 14px; letter-spacing: 0.16em;
+        text-transform: uppercase; opacity: 0.5;
+      ">aucun écrit trouvé</div>
+    )}
+  </main>
 </Base>
+
+<style>
+  @media (max-width: 600px) {
+    div[style*="grid-template-columns: repeat(2"] {
+      grid-template-columns: 1fr !important;
+    }
+  }
+  @media (max-width: 639px) {
+    main { padding-left: 16px !important; padding-right: 16px !important; }
+  }
+</style>

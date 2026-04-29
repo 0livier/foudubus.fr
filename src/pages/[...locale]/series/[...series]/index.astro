@@ -1,0 +1,230 @@
+---
+import { getCollection } from "astro:content";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import config, { monolocale } from "$config";
+import Base from "$layouts/Base.astro";
+import { canonicalPagePath } from "$utils/canonical-url";
+
+export async function getStaticPaths() {
+  const notes = await getCollection("note", (n) => !n.data.draft);
+
+  const seriesByLocale = new Map<string, Map<string, typeof notes>>();
+  for (const note of notes) {
+    if (!note.data.series) continue;
+    const locale = monolocale ? config.i18n.defaultLocale : note.id.split("/")[0];
+    if (!seriesByLocale.has(locale)) seriesByLocale.set(locale, new Map());
+    const byLocale = seriesByLocale.get(locale)!;
+    if (!byLocale.has(note.data.series)) byLocale.set(note.data.series, []);
+    byLocale.get(note.data.series)!.push(note);
+  }
+
+  const paths: { params: { locale?: string; series: string }; props: { seriesName: string; chapters: any[] } }[] = [];
+  for (const locale of config.i18n.locales) {
+    const localeParam = config.i18n.defaultLocale === locale ? undefined : locale;
+    const byLocale = seriesByLocale.get(locale);
+    if (!byLocale) continue;
+    for (const [seriesName, chapters] of byLocale) {
+      const sorted = [...chapters].sort((a, b) => a.data.timestamp.getTime() - b.data.timestamp.getTime());
+      const slug = seriesName.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const chapterData = sorted.map((ch, i) => {
+        const noteId = monolocale ? ch.id : ch.id.split("/").slice(1).join("/");
+        return {
+          index: i + 1,
+          id: ch.id,
+          noteId,
+          title: ch.data.title,
+          timestamp: ch.data.timestamp,
+          description: ch.data.description,
+          tags: ch.data.tags ?? [],
+        };
+      });
+      paths.push({
+        params: { locale: localeParam, series: slug },
+        props: { seriesName, chapters: chapterData }
+      });
+    }
+  }
+  return paths;
+}
+
+const { locale = config.i18n.defaultLocale } = Astro.params;
+const { seriesName, chapters } = Astro.props;
+
+function dateShort(d: Date): string {
+  const dt = new Date(d);
+  return `${String(dt.getDate()).padStart(2, "0")}.${String(dt.getMonth() + 1).padStart(2, "0")}`;
+}
+
+const isLavande = seriesName === "Lavande";
+const seriesInitial = isLavande ? "L" : seriesName.charAt(0).toUpperCase();
+const notesHref = getRelativeLocaleUrl(locale, canonicalPagePath("/note"));
+---
+
+<Base title={seriesName} {locale}>
+  <main style="padding: 52px 48px 0;">
+    <!-- Back link -->
+    <a href={notesHref} style="
+      display: inline-flex; align-items: center; gap: 6px;
+      font-family: var(--mono-fd); font-size: 10px;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--primary-color); opacity: 0.6;
+      text-decoration: none; margin-bottom: 36px;
+    ">← retour aux écrits</a>
+
+    <!-- Series hero -->
+    <div style="
+      background: color-mix(in srgb, var(--block-color) 80%, transparent);
+      border: 1.5px solid color-mix(in srgb, var(--primary-color) 15%, transparent);
+      padding: 32px; margin-bottom: 48px;
+      position: relative;
+    ">
+      <!-- Cover image for Lavande -->
+      {isLavande && (
+        <img
+          src="/images/lavande/lavande.png"
+          alt={`Série ${seriesName}`}
+          style="width: 100%; height: 200px; object-fit: cover; display: block; margin-bottom: 20px;"
+          loading="lazy"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+        />
+      )}
+      {isLavande && (
+        <div style="
+          display: none; height: 200px; width: 100%;
+          background: repeating-linear-gradient(45deg, #ece2d1, #ece2d1 6px, #16121011 6px, #16121011 12px);
+          align-items: center; justify-content: center;
+          font-family: var(--mono-fd); font-size: 10px;
+          letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 20px;
+        ">[ couverture ]</div>
+      )}
+
+      <div style="display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap;">
+        <span style="
+          background: var(--accent-color); color: var(--background-color);
+          font-family: var(--bebas); font-size: 24px; padding: 4px 12px;
+          letter-spacing: 0.08em; flex-shrink: 0;
+        ">L.{seriesInitial}</span>
+        <div style="flex: 1;">
+          <div style="
+            font-family: var(--mono-fd); font-size: 10px;
+            letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.6;
+            margin-bottom: 6px;
+          ">série · {chapters.length} chapitres</div>
+          <h1 style="
+            font-family: var(--serif-display); font-style: italic;
+            font-size: clamp(40px, 8vw, 72px); font-weight: 500;
+            line-height: 0.9; margin: 0 0 12px;
+          ">{seriesName}</h1>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <span class="sticker sticker-bordeaux angle-1">série</span>
+            {isLavande && <span class="sticker sticker-ink angle-2">fiction</span>}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chapter timeline header -->
+    <div style="
+      display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
+      font-family: var(--mono-fd); font-size: 11px;
+      letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.75;
+    ">
+      <span>▶ {chapters.length} arrêts</span>
+      <div class="route-line-h" style="flex: 1; height: 4px; color: var(--ticket);"></div>
+      <span>dans l'ordre ↓</span>
+    </div>
+
+    <!-- Chapter timeline -->
+    <div style="position: relative; padding-bottom: 52px;">
+      {chapters.map((ch) => {
+        const href = getRelativeLocaleUrl(locale, canonicalPagePath(`/note/${ch.noteId}`));
+        const ds = dateShort(ch.timestamp);
+        return (
+          <div style="
+            display: grid;
+            grid-template-columns: 60px 30px 1fr auto;
+            gap: 0 16px;
+            margin-bottom: 0;
+            position: relative;
+            align-items: stretch;
+          ">
+            <!-- Chapter number -->
+            <div style="
+              font-family: var(--bebas); font-size: 42px; line-height: 1;
+              color: var(--ticket); text-align: right;
+              padding: 16px 0;
+            ">{String(ch.index).padStart(2, "0")}</div>
+
+            <!-- Route line column -->
+            <div style="
+              display: flex; flex-direction: column; align-items: center;
+              padding: 0;
+            ">
+              <div style="width: 2px; flex: 1; background: color-mix(in srgb, var(--ticket) 40%, transparent); min-height: 20px;"></div>
+              <div style="
+                width: 10px; height: 10px; border-radius: 50%;
+                background: var(--ticket); flex-shrink: 0;
+              "></div>
+              <div style="width: 2px; flex: 1; background: color-mix(in srgb, var(--ticket) 40%, transparent); min-height: 20px;"></div>
+            </div>
+
+            <!-- Content -->
+            <div style="padding: 14px 0 14px;">
+              <a href={href} style="
+                font-family: var(--serif-display); font-style: italic;
+                font-size: 26px; font-weight: 500; line-height: 1.1;
+                color: var(--primary-color);
+                text-decoration: underline; text-decoration-color: transparent;
+                text-underline-offset: 3px; transition: text-decoration-color 0.15s;
+              ">{ch.title}</a>
+              {ch.description && (
+                <p style="
+                  font-size: 14px; line-height: 1.5; opacity: 0.7;
+                  margin: 6px 0 0; max-width: 500px;
+                ">{ch.description}</p>
+              )}
+            </div>
+
+            <!-- Date -->
+            <div style="
+              font-family: var(--mono-fd); font-size: 11px; font-weight: 600;
+              padding: 14px 0; white-space: nowrap; opacity: 0.65;
+            ">{ds}</div>
+          </div>
+        );
+      })}
+
+      <!-- À parution -->
+      <div style="
+        display: grid;
+        grid-template-columns: 60px 30px 1fr;
+        gap: 0 16px;
+        align-items: center;
+        margin-top: 8px;
+      ">
+        <div></div>
+        <div style="display: flex; justify-content: center;">
+          <div style="width: 10px; height: 10px; border-radius: 50%; background: color-mix(in srgb, var(--primary-color) 20%, transparent);"></div>
+        </div>
+        <div style="
+          border: 1px dashed color-mix(in srgb, var(--primary-color) 25%, transparent);
+          padding: 10px 14px;
+          font-family: var(--mono-fd); font-size: 10px;
+          letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.5;
+        ">à parution prochaine…</div>
+      </div>
+    </div>
+  </main>
+</Base>
+
+<style>
+  @media (max-width: 639px) {
+    main { padding-left: 16px !important; padding-right: 16px !important; }
+    div[style*="grid-template-columns: 60px 30px 1fr auto"] {
+      grid-template-columns: 40px 24px 1fr !important;
+    }
+    div[style*="grid-template-columns: 60px 30px 1fr"]:last-child {
+      grid-template-columns: 40px 24px 1fr !important;
+    }
+  }
+</style>

@@ -1,0 +1,100 @@
+---
+import { getCollection } from "astro:content";
+import { getRelativeLocaleUrl } from "astro:i18n";
+import config, { monolocale } from "$config";
+import Base from "$layouts/Base.astro";
+import { canonicalPagePath } from "$utils/canonical-url";
+
+export async function getStaticPaths() {
+  return config.i18n.locales.map(locale => ({
+    params: { locale: config.i18n.defaultLocale === locale ? undefined : locale }
+  }));
+}
+
+const { locale = config.i18n.defaultLocale } = Astro.params;
+
+const notes = await getCollection("note", (n) => {
+  if (n.data.draft) return false;
+  return monolocale || n.id.split("/")[0] === locale;
+});
+
+const seriesMap = new Map<string, { count: number; latest: Date; slug: string }>();
+for (const note of notes) {
+  if (!note.data.series) continue;
+  const s = note.data.series;
+  const slug = s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const existing = seriesMap.get(s);
+  if (!existing) {
+    seriesMap.set(s, { count: 1, latest: note.data.timestamp, slug });
+  } else {
+    existing.count++;
+    if (note.data.timestamp > existing.latest) existing.latest = note.data.timestamp;
+  }
+}
+const seriesList = Array.from(seriesMap.entries())
+  .map(([name, info]) => ({ name, ...info }))
+  .sort((a, b) => b.latest.getTime() - a.latest.getTime());
+---
+
+<Base title="Séries" {locale}>
+  <main style="padding: 52px 48px 0;">
+    <div style="margin-bottom: 36px;">
+      <div style="
+        font-family: var(--mono-fd); font-size: 11px;
+        letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.6;
+        margin-bottom: 10px;
+      ">⌬ PUBLICATIONS EN SÉRIE</div>
+      <h1 style="
+        font-family: var(--serif-display); font-style: italic;
+        font-size: clamp(48px, 8vw, 80px); font-weight: 500;
+        line-height: 0.9; margin: 0 0 6px; color: var(--primary-color);
+      ">Séries</h1>
+      <div style="font-family: var(--hand); font-size: 22px; color: var(--bordeaux);">
+        lire dans l'ordre, ou pas →
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 16px; padding-bottom: 52px;">
+      {seriesList.map((s) => (
+        <a
+          href={getRelativeLocaleUrl(locale, canonicalPagePath(`/series/${s.slug}`))}
+          style="
+            display: flex; align-items: center; gap: 18px;
+            padding: 20px 24px;
+            border: 1.5px solid color-mix(in srgb, var(--primary-color) 18%, transparent);
+            background: var(--block-color);
+            text-decoration: none; color: var(--primary-color);
+          "
+        >
+          <span style="
+            background: var(--accent-color); color: var(--background-color);
+            font-family: var(--bebas); font-size: 22px; padding: 2px 10px;
+            letter-spacing: 0.08em; flex-shrink: 0;
+          ">L.{s.name === "Lavande" ? "L" : s.name.charAt(0).toUpperCase()}</span>
+          <div style="flex: 1;">
+            <div style="
+              font-family: var(--serif-display); font-style: italic;
+              font-size: 28px; font-weight: 500; line-height: 1;
+              margin-bottom: 4px;
+            ">{s.name}</div>
+            <div style="
+              font-family: var(--mono-fd); font-size: 10px;
+              letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.55;
+            ">{s.count} {s.count > 1 ? "chapitres" : "chapitre"}</div>
+          </div>
+          <span style="
+            font-family: var(--mono-fd); font-size: 10px;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--accent-color); opacity: 0.8;
+          ">▸ LIRE</span>
+        </a>
+      ))}
+    </div>
+  </main>
+</Base>
+
+<style>
+  @media (max-width: 639px) {
+    main { padding-left: 16px !important; padding-right: 16px !important; }
+  }
+</style>

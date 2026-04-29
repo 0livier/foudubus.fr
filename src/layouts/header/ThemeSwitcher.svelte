@@ -1,6 +1,5 @@
 <script lang="ts">
 import { onMount } from "svelte";
-import Icon from "$components/Icon.svelte";
 
 let { dark = $bindable(false) } = $props();
 
@@ -61,10 +60,19 @@ onMount(() => {
 });
 </script>
 
-<button class="items-center" aria-label="Toggle dark theme" onclick={triggerDark}>
-	{#if dark}
-		<Icon name="lucide--moon" />
-	{:else}
-		<Icon name="lucide--sun" />
-	{/if}
-</button>
+<button
+  aria-label="Basculer jour/nuit"
+  onclick={triggerDark}
+  style="
+    border: 1px solid currentColor;
+    padding: 5px 9px;
+    font-family: var(--mono-fd);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--primary-color);
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+  "
+>{dark ? '☼ JOUR' : '☾ NUIT'}</button>

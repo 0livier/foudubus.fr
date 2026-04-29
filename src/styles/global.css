@@ -1,445 +1,396 @@
 /** biome-ignore-all lint/correctness/noUnknownTypeSelector: https://github.com/biomejs/biome/issues/8338 */
 
-/* Design tokens: light & dark values, then current tokens (default to light) */
+/* ─── Design tokens ──────────────────────────────────────────────────────────
+   Night (dark) is the default. Day mode is "papier crème + encre noire".
+   Accent accents: bordeaux, ticket yellow, municipal blue.
+   We keep the --primary-color / --background-color etc. names so existing
+   Tailwind utilities (text-primary, bg-background, …) continue to work.
+   ─────────────────────────────────────────────────────────────────────────── */
+
 :root {
-/* Light theme colors */
---primary-color-light: #181718;
---secondary-color-light: #4a4748;
---remark-color-light: #6a6866;
---weak-color-light: #8c8a86;
---background-color-light: #fffef8;
---block-color-light: #f1efea;
---shadow-color-light: #d6d3cc;
---selection-color-light: #f5c54266;
---accent-color-light: #e5b532;
+  /* ── Night (dark) values ── */
+  --primary-color-dark:    #ece4d3;   /* pale — text */
+  --secondary-color-dark:  #9b938a;   /* pale-mute — secondary text */
+  --remark-color-dark:     #9b938a;
+  --weak-color-dark:       #5c5650;
+  --background-color-dark: #0c1018;   /* night */
+  --block-color-dark:      #141a25;   /* night-2 */
+  --shadow-color-dark:     #1f2735;   /* night-edge */
+  --selection-color-dark:  #f0c14b44;
+  --accent-color-dark:     #f0c14b;   /* amber / ticket yellow */
 
-/* Dark theme colors */
---primary-color-dark: #e8e6df;
---secondary-color-dark: #9c9a94;
---remark-color-dark: #9f9d96;
---weak-color-dark: #7a7872;
---background-color-dark: #0b0b0c;
---block-color-dark: #161615;
---shadow-color-dark: #2a2a28;
---selection-color-dark: #f5c54255;
---accent-color-dark: #f5c542;
+  /* ── Day (light) values ── */
+  --primary-color-light:    #161210;  /* ink */
+  --secondary-color-light:  #3a302a;  /* ink-soft */
+  --remark-color-light:     #6b5e54;  /* ink-mute */
+  --weak-color-light:       #9b8e85;
+  --background-color-light: #f3ece0;  /* paper */
+  --block-color-light:      #ece2d1;  /* paper-2 */
+  --shadow-color-light:     #d8cdb8;  /* paper-edge */
+  --selection-color-light:  #7a1f2b33;
+  --accent-color-light:     #7a1f2b;  /* bordeaux */
 
-/* Series "Lavande" accent (violet foncé) */
---accent-color-lavande: #8b60b3;
---selection-color-lavande: #8b60b355;
---accent-color-lavande-light: #8b60b3;
---selection-color-lavande-light: #8b60b366;
+  /* ── Fixed accent tokens (same in both modes) ── */
+  --bordeaux:   #7a1f2b;
+  --ticket:     #f0c14b;
+  --municipal:  #1d3a6b;
+  --warning:    #d65e1e;
+  --amber:      #f0c14b;
 
-	/* Default to dark values */
-	--primary-color: var(--primary-color-dark);
-	--secondary-color: var(--secondary-color-dark);
-	--remark-color: var(--remark-color-dark);
-	--weak-color: var(--weak-color-dark);
-	--background-color: var(--background-color-dark);
-	--block-color: var(--block-color-dark);
-	--shadow-color: var(--shadow-color-dark);
-	--selection-color: var(--selection-color-dark);
-	--accent-color: var(--accent-color-dark);
-	--font-serif: "Noto Serif", serif;
-	--font-monospace: "Maple Mono NF CN", monospace;
-	--font-cursive: "Playwrite MX", "The Peak Font Plus", serif;
+  /* ── Typography ── */
+  --serif-display: 'Cormorant Garamond', Georgia, serif;
+  --serif-body:    'Source Serif 4', 'Cormorant Garamond', Georgia, serif;
+  --bebas:         'Bebas Neue', 'Archivo Narrow', Impact, sans-serif;
+  --grotesk:       'Archivo Narrow', 'Bebas Neue', Impact, sans-serif;
+  --mono-fd:       'JetBrains Mono', ui-monospace, Menlo, monospace;
+  --hand:          'Caveat', cursive;
 
-	--swup-fade-theme-duration: 0.15s;
+  /* Tailwind-mapped names */
+  --font-serif:      var(--serif-body);
+  --font-monospace:  var(--mono-fd);
+  --font-cursive:    var(--hand);
+
+  /* ── Default to dark values ── */
+  --primary-color:    var(--primary-color-dark);
+  --secondary-color:  var(--secondary-color-dark);
+  --remark-color:     var(--remark-color-dark);
+  --weak-color:       var(--weak-color-dark);
+  --background-color: var(--background-color-dark);
+  --block-color:      var(--block-color-dark);
+  --shadow-color:     var(--shadow-color-dark);
+  --selection-color:  var(--selection-color-dark);
+  --accent-color:     var(--accent-color-dark);
+
+  --swup-fade-theme-duration: 0.15s;
 }
 
-/* Dark theme colors */
+/* ── System dark preference ── */
 @media (prefers-color-scheme: dark) {
-	:root {
-		/* Switch the tokens to reference the dark source values */
-		--primary-color: var(--primary-color-dark);
-		--secondary-color: var(--secondary-color-dark);
-		--remark-color: var(--remark-color-dark);
-		--weak-color: var(--weak-color-dark);
-		--background-color: var(--background-color-dark);
-		--block-color: var(--block-color-dark);
-		--shadow-color: var(--shadow-color-dark);
-		--selection-color: var(--selection-color-dark);
-		--accent-color: var(--accent-color-dark);
-	}
-
-	.astro-code,
-	.astro-code span {
-		color: var(--shiki-dark) !important;
-		background-color: var(--shiki-dark-bg) !important;
-	}
+  :root {
+    --primary-color:    var(--primary-color-dark);
+    --secondary-color:  var(--secondary-color-dark);
+    --remark-color:     var(--remark-color-dark);
+    --weak-color:       var(--weak-color-dark);
+    --background-color: var(--background-color-dark);
+    --block-color:      var(--block-color-dark);
+    --shadow-color:     var(--shadow-color-dark);
+    --selection-color:  var(--selection-color-dark);
+    --accent-color:     var(--accent-color-dark);
+  }
+  .astro-code, .astro-code span {
+    color: var(--shiki-dark) !important;
+    background-color: var(--shiki-dark-bg) !important;
+  }
 }
 
-
-/* Manual theme overrides */
+/* ── Manual theme overrides ── */
 [data-theme="light"] {
-	--primary-color: var(--primary-color-light);
-	--secondary-color: var(--secondary-color-light);
-	--remark-color: var(--remark-color-light);
-	--weak-color: var(--weak-color-light);
-	--background-color: var(--background-color-light);
-	--block-color: var(--block-color-light);
-	--shadow-color: var(--shadow-color-light);
-	--selection-color: var(--selection-color-light);
-	--accent-color: var(--accent-color-light);
+  --primary-color:    var(--primary-color-light);
+  --secondary-color:  var(--secondary-color-light);
+  --remark-color:     var(--remark-color-light);
+  --weak-color:       var(--weak-color-light);
+  --background-color: var(--background-color-light);
+  --block-color:      var(--block-color-light);
+  --shadow-color:     var(--shadow-color-light);
+  --selection-color:  var(--selection-color-light);
+  --accent-color:     var(--accent-color-light);
 }
 
 [data-theme="dark"] {
-	--primary-color: var(--primary-color-dark);
-	--secondary-color: var(--secondary-color-dark);
-	--remark-color: var(--remark-color-dark);
-	--weak-color: var(--weak-color-dark);
-	--background-color: var(--background-color-dark);
-	--block-color: var(--block-color-dark);
-	--shadow-color: var(--shadow-color-dark);
-	--selection-color: var(--selection-color-dark);
-	--accent-color: var(--accent-color-dark);
+  --primary-color:    var(--primary-color-dark);
+  --secondary-color:  var(--secondary-color-dark);
+  --remark-color:     var(--remark-color-dark);
+  --weak-color:       var(--weak-color-dark);
+  --background-color: var(--background-color-dark);
+  --block-color:      var(--block-color-dark);
+  --shadow-color:     var(--shadow-color-dark);
+  --selection-color:  var(--selection-color-dark);
+  --accent-color:     var(--accent-color-dark);
 }
 
 [data-theme="dark"] .astro-code,
 [data-theme="dark"] .astro-code span {
-	color: var(--shiki-dark) !important;
-	background-color: var(--shiki-dark-bg) !important;
+  color: var(--shiki-dark) !important;
+  background-color: var(--shiki-dark-bg) !important;
 }
 
-/* Accent overrides for series "Lavande" (body has data-series, theme is on html) */
+/* ── Series accent: Lavande ── */
 body[data-series="Lavande"] {
-	--accent-color: var(--accent-color-lavande);
-	--selection-color: var(--selection-color-lavande);
+  --accent-color: #8b60b3;
+  --selection-color: #8b60b355;
 }
 html[data-theme="light"] body[data-series="Lavande"] {
-	--accent-color: var(--accent-color-lavande-light);
-	--selection-color: var(--selection-color-lavande-light);
+  --accent-color: #8b60b3;
+  --selection-color: #8b60b366;
 }
 
-/* Base reset styles */
+/* ─── Base reset ─────────────────────────────────────────────────────────── */
 @layer base {
-	* {
-		margin: 0;
-		padding: 0;
-		box-sizing: border-box;
-		font-family: inherit;
-		user-select: none;
-		-webkit-tap-highlight-color: transparent;
-	}
-
-	*::selection {
-		background-color: var(--selection-color);
-	}
-
-	*::-webkit-scrollbar {
-		background-color: transparent;
-		width: 5px;
-		height: 5px;
-	}
-
-	*::-webkit-scrollbar-thumb {
-		border-radius: 5px;
-		background-color: var(--primary-color);
-	}
-
-	@supports not selector(::-webkit-scrollbar) {
-		* {
-			scrollbar-width: thin;
-			scrollbar-color: var(--primary-color) transparent;
-		}
-	}
-
-	html {
-		scroll-behavior: smooth;
-		overflow-x: clip;
-	}
-
-	body {
-		font-size: 1.0625rem;
-		font-family: var(--font-serif), var(--font-monospace);
-		color: var(--primary-color);
-		background-color: var(--background-color);
-		overflow-x: clip;
-	}
-
-	@media screen and (max-width: 640px) {
-		body {
-			font-size: 1rem;
-		}
-	}
-
-	h1,
-	h2,
-	h3,
-	h4,
-	h5,
-	h6 {
-		font-weight: bold;
-	}
-
-	h1 {
-		font-size: 2.25rem;
-	}
-
-	h2 {
-		font-size: 1.75rem;
-	}
-
-	h3 {
-		font-size: 1.5rem;
-	}
-
-	h4 {
-		font-size: 1.25rem;
-	}
-
-	h5 {
-		font-size: 1.125rem;
-	}
-
-	h6 {
-		font-size: 1rem;
-	}
-
-	a {
-		text-decoration: none;
-		color: inherit;
-		-webkit-user-drag: none;
-	}
-
-	button {
-		display: flex;
-		border: none;
-		color: inherit;
-		font-size: inherit;
-		cursor: pointer;
-		background: transparent;
-	}
-
-	button[disabled] {
-		color: var(--weak-color);
-		cursor: not-allowed;
-	}
-
-	input,
-	textarea {
-		color: var(--primary-color);
-	}
-
-	textarea {
-		line-height: 1.5;
-	}
-
-	img {
-		max-width: 100%;
-		height: auto;
-		-webkit-user-drag: none;
-	}
-
-	svg {
-		fill: currentColor;
-	}
-
-	hr {
-		border: none;
-	}
-}
-
-/* Custom switch checkbox */
-input[type="checkbox"].switch {
-	position: relative;
-	appearance: none;
-	cursor: pointer;
-	margin: 0px 5px;
-	width: 2rem;
-	height: 1rem;
-
-	&::before {
-		position: absolute;
-		display: flex;
-		content: "F";
-		align-items: center;
-		justify-content: center;
-		inset-inline-start: 0;
-		height: 1rem;
-		width: 1rem;
-		font-family: var(--font-monospace);
-		font-size: 0.8rem;
-		text-align: center;
-		color: var(--background-color);
-		background-color: var(--primary-color);
-		z-index: 1;
-		transition: inset-inline-start 0.15s ease-in;
-	}
-
-	&::after {
-		position: absolute;
-		content: "";
-		bottom: 0.4rem;
-		width: 100%;
-		border-bottom: 2px solid var(--primary-color);
-	}
-
-	&:checked::before {
-		content: "T";
-		inset-inline-start: 1rem;
-	}
-}
-
-/* Swup progress bar */
-.swup-progress-bar {
-	--direction: to right;
-
-	height: 0.15rem;
-	background: linear-gradient(var(--direction), var(--block-color), var(--secondary-color));
-
-	&:is(html[dir="rtl"] *) {
-		--direction: to left;
-		transform-origin: right center;
-	}
-}
-
-/* Medium zoom */
-.medium-zoom-overlay {
-	z-index: 5;
-}
-
-.medium-zoom-image--opened {
-	z-index: 5;
-}
-
-/* View transitions */
-::view-transition-old(root),
-::view-transition-new(root) {
-	animation: none;
-	mix-blend-mode: normal;
-}
-
-::view-transition-old(root) {
-	z-index: 1;
-}
-
-::view-transition-new(root) {
-	z-index: 10;
-}
-
-[data-theme="dark"]::view-transition-old(root) {
-	z-index: 10;
-}
-
-[data-theme="dark"]::view-transition-new(root) {
-	z-index: 1;
-}
-
-
-
-h1, h2, h3, h4, h5, h6 {
-	font-family: "Great Vibes", cursive;
-    font-weight: 400;
-	font-style: normal;
-}
-
-main > article > section > div > div > a {
-	font-family: "Great Vibes", cursive;
-	font-weight: 400;
-	font-style: normal;
-	font-size: 2.25rem;
-}
-
-header a, blockquote h4, aside h4 {
-	font-family: "Special Elite", system-ui;
-	font-weight: 400;
-	font-style: normal;
-	font-size: 1.5rem;
-}
-
-h1, h1 a, footer a, a.link {
-	color:var(--accent-color) !important; 
-}
-
-p { line-height: 1.7; font-size: 1.05rem; }
-
-body{ color:var(--primary-color); }
-a { color:var(--secondary-color); text-decoration-thickness:2px; text-underline-offset:3px; }
-.meta, time, .muted { color:var(--remark-color); }
-.text-secondary, .text-remark{ color:var(--remark-color); }
-
-.ms-1.link {
-	color:var(--block-color) !important;
-	text-decoration: underline;
-}
-
-hr{ border-color: color-mix(in srgb, var(--remark-color) 45%, transparent); }
-
-.block.bg-primary {
-	background-color: var(--accent-color);
-}
-
-p { line-height: 1.75; }
-.home h1 { margin-bottom: .6rem; }
-.recent { margin-top: 2.5rem; }
-.pattern { opacity: .18; }
-
-.markdown { 
-	display: flow-root; /* ou display: block; */
-}
-
-.markdown figure:has(img) {
-	float: right;
-	margin: 0 0 1rem 1rem;
-	max-width: 40%;
-}
-
-.markdown figure:has(img) img{
-	display: block;
-	width: 100%;
-	height: auto;
-}
-
-.markdown > * + * {
-	margin-top: 0.75rem; /* ajuste: 0.75rem, 1.25rem, etc */
-}
-
-@media (max-width: 900px) {
-	.markdown figure:has(img) {
-	  float: right;                 /* tu le gardes */
-	  width: clamp(120px, 32vw, 180px);
-	  margin: 0 0 0.75rem 0.75rem;
-	  max-width: none;
-	}
-  
-	.markdown figure:has(img) img {
-	  width: 100%;
-	  height: auto;
-	  max-height: 45vh;             /* évite que ça “mange” 40 lignes */
-	  object-fit: cover;            /* si tu veux couper plutôt que réduire */
-	  display: block;
-	}
-  
-	.markdown figure:has(img) figcaption {
-	  display: none;
-	}
+  * {
+    margin: 0; padding: 0;
+    box-sizing: border-box;
+    font-family: inherit;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
 
+  *::selection { background-color: var(--selection-color); }
+
+  *::-webkit-scrollbar { background-color: transparent; width: 5px; height: 5px; }
+  *::-webkit-scrollbar-thumb { border-radius: 5px; background-color: var(--primary-color); }
+
+  @supports not selector(::-webkit-scrollbar) {
+    * { scrollbar-width: thin; scrollbar-color: var(--primary-color) transparent; }
+  }
+
+  html { scroll-behavior: smooth; overflow-x: clip; }
+
+  body {
+    font-size: 1.0625rem;
+    font-family: var(--serif-body);
+    color: var(--primary-color);
+    background-color: var(--background-color);
+    overflow-x: clip;
+  }
+
+  @media screen and (max-width: 640px) { body { font-size: 1rem; } }
+
+  h1, h2, h3, h4, h5, h6 { font-weight: bold; }
+  h1 { font-size: 2.25rem; }
+  h2 { font-size: 1.75rem; }
+  h3 { font-size: 1.5rem; }
+  h4 { font-size: 1.25rem; }
+  h5 { font-size: 1.125rem; }
+  h6 { font-size: 1rem; }
+
+  a { text-decoration: none; color: inherit; -webkit-user-drag: none; }
+
+  button {
+    display: flex; border: none; color: inherit;
+    font-size: inherit; cursor: pointer; background: transparent;
+  }
+  button[disabled] { color: var(--weak-color); cursor: not-allowed; }
+
+  input, textarea { color: var(--primary-color); }
+  textarea { line-height: 1.5; }
+  img { max-width: 100%; height: auto; -webkit-user-drag: none; }
+  svg { fill: currentColor; }
+  hr { border: none; }
+}
+
+/* ─── Textures ──────────────────────────────────────────────────────────── */
+.paper-tex {
+  background-color: var(--background-color-light);
+  background-image:
+    radial-gradient(rgba(0,0,0,0.06) 1px, transparent 1px),
+    radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 2px;
+}
+
+.night-tex {
+  background-color: var(--background-color-dark);
+  background-image:
+    radial-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    radial-gradient(rgba(240,193,75,0.02) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+}
+
+.halftone {
+  background-image: radial-gradient(rgba(0,0,0,0.5) 22%, transparent 23%);
+  background-size: 4px 4px;
+}
+
+/* grain overlay — applied as ::after on sections */
+.grain { position: relative; }
+.grain::after {
+  content: '';
+  position: absolute; inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.18 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: .55;
+  mix-blend-mode: multiply;
+}
+.grain-light::after { mix-blend-mode: screen; opacity: .35; }
+
+/* ─── Typography utilities ──────────────────────────────────────────────── */
+.upper      { text-transform: uppercase; letter-spacing: 0.12em; }
+.smallcaps  { font-variant-caps: small-caps; letter-spacing: 0.06em; }
+
+/* ─── Sticker tag ───────────────────────────────────────────────────────── */
+.sticker {
+  font-family: var(--mono-fd);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 2px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  transform: rotate(-0.6deg);
+  border: 1px solid rgba(0,0,0,0.15);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  cursor: default;
+}
+.sticker.clickable { cursor: pointer; }
+.sticker.angle-2 { transform: rotate(1deg); }
+.sticker.angle-3 { transform: rotate(-2deg); }
+.sticker.angle-4 { transform: rotate(0.5deg); }
+
+/* Sticker colour variants */
+.sticker-bordeaux  { background: #7a1f2b; color: #f3ece0; }
+.sticker-ticket    { background: #f0c14b; color: #161210; }
+.sticker-municipal { background: #1d3a6b; color: #f3ece0; }
+.sticker-warning   { background: #d65e1e; color: #f3ece0; }
+.sticker-ink       { background: #161210; color: #f3ece0; }
+.sticker-paper     { background: #f3ece0; color: #161210; border: 1px dashed rgba(0,0,0,0.2); }
+.sticker-ghost     { background: transparent; color: currentColor; border: 1px dashed currentColor; box-shadow: none; }
+
+/* ─── Stamp ─────────────────────────────────────────────────────────────── */
+.stamp {
+  font-family: var(--mono-fd);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1.5px solid currentColor;
+  padding: 2px 7px;
+  display: inline-block;
+  transform: rotate(-1.5deg);
+  font-size: 11px;
+}
+.stamp-strong {
+  border-width: 2px;
+  padding: 4px 9px;
+  font-size: 12px;
+}
+
+/* ─── Tape strip ────────────────────────────────────────────────────────── */
+.tape {
+  position: absolute;
+  background: rgba(240,193,75,0.55);
+  height: 22px; width: 80px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  mix-blend-mode: multiply;
+  border: 1px dashed rgba(0,0,0,0.1);
+}
+
+/* ─── CRT / LED bus display ─────────────────────────────────────────────── */
+.led-strip {
+  background: #0a0a0a;
+  color: var(--amber);
+  font-family: var(--mono-fd);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 8px 14px;
+  border-radius: 2px;
+  border: 1px solid #1a1a1a;
+  text-shadow: 0 0 6px rgba(240,193,75,0.55);
+  font-weight: 600;
+  font-size: 13px;
+  display: inline-block;
+}
+
+/* ─── Dashed bus route lines ────────────────────────────────────────────── */
+.route-line {
+  background-image: linear-gradient(to bottom, currentColor 50%, transparent 0);
+  background-size: 2px 8px;
+  background-repeat: repeat-y;
+  background-position: center;
+}
+.route-line-h {
+  background-image: linear-gradient(to right, currentColor 50%, transparent 0);
+  background-size: 8px 2px;
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+/* ─── Perforated ticket edges ───────────────────────────────────────────── */
+.perf-bottom {
+  -webkit-mask: radial-gradient(circle 5px at 5px 100%, transparent 98%, #000 100%) -5px 0/12px 100%;
+          mask: radial-gradient(circle 5px at 5px 100%, transparent 98%, #000 100%) -5px 0/12px 100%;
+}
+.perf-top {
+  -webkit-mask: radial-gradient(circle 5px at 5px 0%, transparent 98%, #000 100%) -5px 0/12px 100%;
+          mask: radial-gradient(circle 5px at 5px 0%, transparent 98%, #000 100%) -5px 0/12px 100%;
+}
+
+/* ─── Reading progress bar ──────────────────────────────────────────────── */
+.reading-bar {
+  height: 3px;
+  background: var(--ticket);
+  box-shadow: 0 0 8px rgba(240,193,75,0.6);
+  transition: width 0.1s linear;
+}
+
+/* ─── Swup progress bar ─────────────────────────────────────────────────── */
+.swup-progress-bar {
+  --direction: to right;
+  height: 0.15rem;
+  background: linear-gradient(var(--direction), var(--block-color), var(--ticket));
+  &:is(html[dir="rtl"] *) { --direction: to left; transform-origin: right center; }
+}
+
+/* ─── Medium zoom ───────────────────────────────────────────────────────── */
+.medium-zoom-overlay  { z-index: 5; }
+.medium-zoom-image--opened { z-index: 5; }
+
+/* ─── View transitions ──────────────────────────────────────────────────── */
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-old(root) { z-index: 1; }
+::view-transition-new(root) { z-index: 10; }
+[data-theme="dark"]::view-transition-old(root) { z-index: 10; }
+[data-theme="dark"]::view-transition-new(root) { z-index: 1; }
+
+/* ─── General prose helpers ─────────────────────────────────────────────── */
+p { line-height: 1.75; }
+a { color: var(--secondary-color); }
+.meta, time, .muted { color: var(--remark-color); }
+.text-secondary, .text-remark { color: var(--remark-color); }
+hr { border-color: color-mix(in srgb, var(--remark-color) 45%, transparent); }
+
+/* ─── Custom switch checkbox ────────────────────────────────────────────── */
+input[type="checkbox"].switch {
+  position: relative; appearance: none; cursor: pointer;
+  margin: 0px 5px; width: 2rem; height: 1rem;
+  &::before {
+    position: absolute; display: flex; content: "F";
+    align-items: center; justify-content: center;
+    inset-inline-start: 0; height: 1rem; width: 1rem;
+    font-family: var(--mono-fd); font-size: 0.8rem; text-align: center;
+    color: var(--background-color); background-color: var(--primary-color);
+    z-index: 1; transition: inset-inline-start 0.15s ease-in;
+  }
+  &::after {
+    position: absolute; content: ""; bottom: 0.4rem;
+    width: 100%; border-bottom: 2px solid var(--primary-color);
+  }
+  &:checked::before { content: "T"; inset-inline-start: 1rem; }
+}
+
+/* ─── Article drop-cap ──────────────────────────────────────────────────── */
+.markdown.article-body > p:first-of-type::first-letter {
+  font-family: var(--serif-display);
+  font-style: italic;
+  font-size: 4.5rem;
+  line-height: 0.85;
+  float: left;
+  padding: 6px 8px 0 0;
+  color: var(--accent-color);
+}
+
+/* ─── Definition blocks (content shortcode) ─────────────────────────────── */
 .definition {
-	background: var(--background-color-light);
-	padding:1em;
-	color:black;
-	font-size: 0.9rem;
+  background: var(--background-color-light);
+  padding: 1em; color: black; font-size: 0.9rem;
 }
-
-.definition img {
-	width: 25%;
-	height: auto;
-	float: right;
-}
-
+.definition img { width: 25%; height: auto; float: right; }
 .definition h2 {
-	font-family: var(--font-cursive);
-	font-size: 1.25rem;
-	border-bottom: 1px dotted #888 !important;
-	margin-bottom: 0.3em;
+  font-family: var(--hand); font-size: 1.25rem;
+  border-bottom: 1px dotted #888 !important; margin-bottom: 0.3em;
 }
-.definition em {
-	font-style: italic;
-	font-weight: 300;
-	color: #666;
-}
-.definition strong {
-	font-weight: bold;
-}
+.definition em { font-style: italic; font-weight: 300; color: #666; }
+.definition strong { font-weight: bold; }
